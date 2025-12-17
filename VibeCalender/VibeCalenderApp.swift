@@ -9,9 +9,12 @@ import SwiftUI
 
 @main
 struct VibeCalenderApp: App {
-    var body: some Scene {
-        WindowGroup {
-            ContentView()
-        }
+  @StateObject private var eventManager = EventManager()
+
+  var body: some Scene {
+    WindowGroup {
+      ContentView()
+        .environmentObject(eventManager)
     }
+  }
 }
