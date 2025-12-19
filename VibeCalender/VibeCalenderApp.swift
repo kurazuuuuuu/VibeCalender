@@ -15,6 +15,7 @@ struct VibeCalenderApp: App {
     WindowGroup {
       ContentView()
         .environmentObject(eventManager)
+        .preferredColorScheme(.light)
     }
   }
 }

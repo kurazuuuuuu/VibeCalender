@@ -8,7 +8,7 @@
 import EventKit
 import SwiftUI
 
-/// 週間カレンダービュー（Figmaデザイン + Liquid Glass）
+/// カレンダービュー（月間スクロール形式）
 struct WeeklyCalendarView: View {
   @EnvironmentObject var eventManager: EventManager
   @State private var currentDate = Date()
@@ -18,24 +18,33 @@ struct WeeklyCalendarView: View {
 
   var body: some View {
     VStack(spacing: 0) {
-      // ヘッダー（Liquid Glass）
+      // ヘッダー（月切り替え）
       headerView
 
-      // 週間リスト（下部にスペースを追加してタブバーの後ろまでスクロール可能に）
-      ScrollView {
-        LazyVStack(spacing: 12) {
-          ForEach(daysInCurrentWeek, id: \.self) { date in
-            DayRowView(
-              date: date,
-              events: events[calendar.startOfDay(for: date)] ?? []
-            )
-            .padding(.horizontal, 16)
-          }
+      // 月間リスト（スクロール可能）
+      ScrollViewReader { proxy in
+        ScrollView {
+          LazyVStack(spacing: 12) {
+            ForEach(daysInCurrentMonth, id: \.self) { date in
+              DayRowView(
+                date: date,
+                events: events[calendar.startOfDay(for: date)] ?? []
+              )
+              .id(date)
+              .padding(.horizontal, 16)
+            }
 
-          // タブバーの後ろまでスクロールするための余白
-          Spacer(minLength: 140)
+            // タブバーの後ろまでスクロールするための余白
+            Spacer(minLength: 140)
+          }
+          .padding(.vertical, 8)
         }
-        .padding(.vertical, 8)
+        .onAppear {
+          // 今日の日付にスクロール
+          if let today = daysInCurrentMonth.first(where: { calendar.isDateInToday($0) }) {
+            proxy.scrollTo(today, anchor: .top)
+          }
+        }
       }
     }
     .background(
@@ -54,51 +63,51 @@ struct WeeklyCalendarView: View {
     }
   }
 
-  // MARK: - ヘッダー（Liquid Glass）
+  // MARK: - ヘッダー（月切り替え）
 
   private var headerView: some View {
     HStack {
-      Button(action: previousWeek) {
+      Button(action: previousMonth) {
         Image(systemName: "chevron.left")
           .font(.title3)
           .fontWeight(.semibold)
           .foregroundColor(.primary)
           .frame(width: 44, height: 44)
-          .glassCard()
+          .glassEffect(.regular, in: RoundedRectangle(cornerRadius: 12))
       }
 
       Spacer()
 
       Text(monthYearString)
-        .font(.title)
+        .font(.title2)
         .fontWeight(.bold)
 
       Spacer()
 
-      Button(action: nextWeek) {
+      Button(action: nextMonth) {
         Image(systemName: "chevron.right")
           .font(.title3)
           .fontWeight(.semibold)
           .foregroundColor(.primary)
           .frame(width: 44, height: 44)
-          .glassCard()
+          .glassEffect(.regular, in: RoundedRectangle(cornerRadius: 12))
       }
     }
     .padding(.horizontal, 20)
     .padding(.vertical, 16)
   }
 
-  // MARK: - 週の日付
+  // MARK: - 月の日付
 
-  private var daysInCurrentWeek: [Date] {
-    guard let weekInterval = calendar.dateInterval(of: .weekOfYear, for: currentDate) else {
+  private var daysInCurrentMonth: [Date] {
+    guard let monthInterval = calendar.dateInterval(of: .month, for: currentDate) else {
       return []
     }
 
     var dates: [Date] = []
-    var date = weekInterval.start
+    var date = monthInterval.start
 
-    while date < weekInterval.end {
+    while date < monthInterval.end {
       dates.append(date)
       date = calendar.date(byAdding: .day, value: 1, to: date) ?? date
     }
@@ -108,41 +117,40 @@ struct WeeklyCalendarView: View {
 
   private var monthYearString: String {
     let formatter = DateFormatter()
-    formatter.dateFormat = "M月"
+    formatter.dateFormat = "yyyy年 M月"
     formatter.locale = Locale(identifier: "ja_JP")
     return formatter.string(from: currentDate)
   }
 
   // MARK: - Actions
 
-  private func previousWeek() {
+  private func previousMonth() {
     withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
-      currentDate = calendar.date(byAdding: .weekOfYear, value: -1, to: currentDate) ?? currentDate
+      currentDate = calendar.date(byAdding: .month, value: -1, to: currentDate) ?? currentDate
       loadEvents()
     }
   }
 
-  private func nextWeek() {
+  private func nextMonth() {
     withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
-      currentDate = calendar.date(byAdding: .weekOfYear, value: 1, to: currentDate) ?? currentDate
+      currentDate = calendar.date(byAdding: .month, value: 1, to: currentDate) ?? currentDate
       loadEvents()
     }
   }
 
   private func loadEvents() {
-    guard let weekInterval = calendar.dateInterval(of: .weekOfYear, for: currentDate) else {
+    guard let monthInterval = calendar.dateInterval(of: .month, for: currentDate) else {
       return
     }
 
     let predicate = eventManager.store.predicateForEvents(
-      withStart: weekInterval.start,
-      end: weekInterval.end,
+      withStart: monthInterval.start,
+      end: monthInterval.end,
       calendars: nil
     )
 
     let ekEvents = eventManager.store.events(matching: predicate)
 
-    // 日付ごとにグループ化
     var grouped: [Date: [EKEvent]] = [:]
     for event in ekEvents {
       guard let startDate = event.startDate else { continue }
@@ -170,14 +178,10 @@ struct DayRowView: View {
       // 予定リスト
       VStack(spacing: 8) {
         if events.isEmpty {
-          // 空の場合（Liquid Glass風）
           emptyEventCard
         } else {
           ForEach(events, id: \.eventIdentifier) { event in
-            DayEventCardView(
-              event: event,
-              isAIGenerated: false
-            )
+            DayEventCardView(event: event)
           }
         }
       }
@@ -191,13 +195,13 @@ struct DayRowView: View {
       Text(weekdayString)
         .font(.caption)
         .fontWeight(.medium)
-        .foregroundColor(.secondary)
+        .foregroundColor(isWeekend ? .red.opacity(0.8) : .secondary)
 
       Text(dayString)
         .font(.title2)
         .fontWeight(.bold)
         .foregroundColor(isToday ? .white : .primary)
-        .frame(width: 40, height: 40)
+        .frame(width: 44, height: 44)
         .background(
           Group {
             if isToday {
@@ -228,29 +232,16 @@ struct DayRowView: View {
           }
         )
     }
-    .frame(width: 48)
+    .frame(width: 50)
   }
 
   // MARK: - 空の予定カード
 
   private var emptyEventCard: some View {
-    RoundedRectangle(cornerRadius: 16)
-      .fill(.ultraThinMaterial)
-      .overlay(
-        RoundedRectangle(cornerRadius: 16)
-          .stroke(
-            LinearGradient(
-              colors: [
-                Color.white.opacity(0.5),
-                Color.white.opacity(0.1),
-              ],
-              startPoint: .topLeading,
-              endPoint: .bottomTrailing
-            ),
-            lineWidth: 0.5
-          )
-      )
-      .frame(height: 52)
+    HStack {
+      Spacer()
+    }
+    .frame(height: 20)  // スクロール主体の月間表示では高さを抑える
   }
 
   private var weekdayString: String {
@@ -269,48 +260,14 @@ struct DayRowView: View {
   private var isToday: Bool {
     calendar.isDateInToday(date)
   }
-}
 
-// MARK: - Liquid Glass Modifier
-
-extension View {
-  /// Liquid Glass風のカードスタイルを適用
-  func glassCard() -> some View {
-    self
-      .background(
-        ZStack {
-          RoundedRectangle(cornerRadius: 12)
-            .fill(.ultraThinMaterial)
-
-          RoundedRectangle(cornerRadius: 12)
-            .fill(
-              LinearGradient(
-                colors: [
-                  Color.white.opacity(0.3),
-                  Color.clear,
-                ],
-                startPoint: .topLeading,
-                endPoint: .bottomTrailing
-              )
-            )
-
-          RoundedRectangle(cornerRadius: 12)
-            .stroke(
-              LinearGradient(
-                colors: [
-                  Color.white.opacity(0.6),
-                  Color.white.opacity(0.1),
-                ],
-                startPoint: .topLeading,
-                endPoint: .bottomTrailing
-              ),
-              lineWidth: 0.5
-            )
-        }
-      )
-      .shadow(color: Color.black.opacity(0.05), radius: 8, x: 0, y: 4)
+  private var isWeekend: Bool {
+    let weekday = calendar.component(.weekday, from: date)
+    return weekday == 1 || weekday == 7  // 日曜日 or 土曜日
   }
 }
+
+// MARK: - Liquid Glass Modifier (Temporary helper if not global)
 
 #Preview {
   WeeklyCalendarView()

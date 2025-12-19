@@ -27,7 +27,7 @@ struct ContentView: View {
         .font(.system(size: 60))
         .foregroundColor(.orange)
 
-      Text("カレンダーへのアクセス")
+      Text("カレンダーへのアクセスを許可")
         .font(.title2)
         .fontWeight(.bold)
 
