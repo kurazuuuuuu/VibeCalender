@@ -9,23 +9,53 @@ import SwiftUI
 
 struct ContentView: View {
   @EnvironmentObject var eventManager: EventManager
+
   var body: some View {
-    VStack(spacing: 10) {
-      Image(systemName: "calendar")
-        .imageScale(.large)
-        .foregroundStyle(.tint)
-      Text("身勝手カレンダー")
+    Group {
+      if eventManager.isAuthorized {
+        MainTabView()
+      } else {
+        // 認証待ち画面
+        authorizationView
+      }
+    }
+  }
+
+  private var authorizationView: some View {
+    VStack(spacing: 20) {
+      Image(systemName: "calendar.badge.exclamationmark")
+        .font(.system(size: 60))
+        .foregroundColor(.orange)
+
+      Text("カレンダーへのアクセス")
+        .font(.title2)
+        .fontWeight(.bold)
 
       Text(eventManager.statusMessage)
-    }
-    .padding(24)
-    .background(Color.gray.opacity(0.1))
-    .cornerRadius(20)
-    .shadow(radius: 1)
+        .multilineTextAlignment(.center)
+        .foregroundColor(.secondary)
 
+      Button(action: openSettings) {
+        Text("設定を開く")
+          .font(.headline)
+          .foregroundColor(.white)
+          .padding(.horizontal, 32)
+          .padding(.vertical, 12)
+          .background(Color.blue)
+          .cornerRadius(12)
+      }
+    }
+    .padding(32)
+  }
+
+  private func openSettings() {
+    if let url = URL(string: UIApplication.openSettingsURLString) {
+      UIApplication.shared.open(url)
+    }
   }
 }
 
 #Preview {
   ContentView()
+    .environmentObject(EventManager())
 }
