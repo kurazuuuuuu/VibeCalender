@@ -11,6 +11,8 @@ import SwiftUI
 struct MainTabView: View {
   @State private var selectedTab = 0
   @State private var showAddSheet = false
+  @State private var showDebugSheet = false
+  @EnvironmentObject var appConfig: AppConfig
 
   var body: some View {
     Group {
@@ -35,10 +37,28 @@ struct MainTabView: View {
       floatingTabBar
         .padding(.bottom, 20)
     }
+    .overlay(alignment: .topLeading) {
+      if appConfig.isDebugMode {
+        Button(action: { showDebugSheet = true }) {
+          Image(systemName: "ladybug.fill")
+            .font(.system(size: 20))
+            .foregroundColor(.white)
+            .padding(12)
+            .background(Color.purple.opacity(0.8))
+            .clipShape(Circle())
+            .shadow(radius: 4)
+        }
+        .padding(.leading, 16)
+        .padding(.top, 50)
+      }
+    }
     .preferredColorScheme(.light)
     .sheet(isPresented: $showAddSheet) {
       AIDateInputView()
         .preferredColorScheme(.light)
+    }
+    .sheet(isPresented: $showDebugSheet) {
+      DebugProfileView()
     }
   }
 
@@ -176,4 +196,5 @@ struct GlassTabButton: View {
 #Preview {
   MainTabView()
     .environmentObject(EventManager())
+    .environmentObject(AppConfig.shared)
 }
