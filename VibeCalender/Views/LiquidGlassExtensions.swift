@@ -9,50 +9,86 @@ import SwiftUI
 
 // MARK: - Liquid Glass API Extensions
 
-/// Liquid Glass デザインシステムを SwiftUI 標準のように扱うための拡張
-extension ShapeStyle where Self == LiquidGlassStyle {
-  /// Liquid Glass 効果を適用するスタイル
-  static func vibeGlassEffectStyle(tint: Color = .clear) -> LiquidGlassStyle {
-    LiquidGlassStyle(tint: tint)
+// MARK: - Core Definitions
+
+enum LiquidGlassTheme {
+  case standard  // Blue/Cyan/White (General)
+  case ai  // Purple/Pink/Orange (AI Features)
+  case clear  // Minimal (Transparent tint, just gloss)
+
+  var tintColor: Color {
+    switch self {
+    case .standard: return .blue
+    case .ai: return .purple
+    case .clear: return .clear
+    }
   }
 
-  /// Liquid Glass 効果を適用するスタイル（引数なし）
-  static func vibeGlassEffectStyle() -> LiquidGlassStyle {
-    LiquidGlassStyle(tint: .clear)
+  var gradientColors: [Color] {
+    switch self {
+    case .standard:
+      return [.blue.opacity(0.08), .cyan.opacity(0.08)]
+    case .ai:
+      return [.purple.opacity(0.15), .pink.opacity(0.1)]
+    case .clear:
+      return [.clear]
+    }
+  }
+
+  var rimColors: [Color] {
+    switch self {
+    case .standard:
+      return [Color.white.opacity(0.6), Color.white.opacity(0.2)]
+    case .ai:
+      return [Color.white.opacity(0.7), Color.purple.opacity(0.4)]
+    case .clear:
+      return [Color.white.opacity(0.3), Color.white.opacity(0.05)]
+    }
   }
 }
 
-/// Liquid Glass の内部実装用スタイル
+extension ShapeStyle where Self == LiquidGlassStyle {
+  /// Theme-based Liquid Glass Style
+  static func vibeGlassEffectStyle(theme: LiquidGlassTheme = .standard) -> LiquidGlassStyle {
+    LiquidGlassStyle(theme: theme)
+  }
+}
+
+/// Liquid Glass Internal Style Definition
 struct LiquidGlassStyle: ShapeStyle {
-  let tint: Color
+  let theme: LiquidGlassTheme
 
   func resolve(in environment: EnvironmentValues) -> some ShapeStyle {
-    // AnyShapeStyle を戻り値として直接返す
+    // Return base material, opacity slightly adjusted for "Liquid" feel
     AnyShapeStyle(.ultraThinMaterial.opacity(0.95))
   }
 }
 
 extension View {
-  /// 形状に対して Liquid Glass 効果を適用するバックグラウンド設定
-  func vibeGlassEffect<S: Shape>(_ style: LiquidGlassStyle = .vibeGlassEffectStyle(), in shape: S)
-    -> some View
-  {
+  /// Base Modifier for Liquid Glass Effect
+  func vibeGlassEffect<S: Shape>(_ theme: LiquidGlassTheme = .standard, in shape: S) -> some View {
     self.background {
       ZStack {
-        // 基本のマテリアル
+        // 1. Base Material
         shape.fill(.ultraThinMaterial)
 
-        // 色相の反映
-        if style.tint != .clear {
-          shape.fill(style.tint.opacity(0.12))
+        // 2. Theme Tint (Subtle Color Layer)
+        if theme != .clear {
+          shape.fill(
+            LinearGradient(
+              colors: theme.gradientColors,
+              startPoint: .topLeading,
+              endPoint: .bottomTrailing
+            )
+          )
         }
 
-        // 表面の反射光（ハイライト）
+        // 3. Surface Gloss (Reflection)
         shape.fill(
           LinearGradient(
             stops: [
-              .init(color: .white.opacity(0.4), location: 0),
-              .init(color: .white.opacity(0.05), location: 0.4),
+              .init(color: .white.opacity(0.35), location: 0),
+              .init(color: .white.opacity(0.05), location: 0.45),
               .init(color: .clear, location: 1),
             ],
             startPoint: .topLeading,
@@ -60,57 +96,59 @@ extension View {
           )
         )
 
-        // 外縁の光
+        // 4. Rim Light (Edge Highlight)
         shape.stroke(
           LinearGradient(
-            colors: [Color.white.opacity(0.6), Color.white.opacity(0.1)],
+            colors: theme.rimColors,
             startPoint: .topLeading,
             endPoint: .bottomTrailing
           ),
           lineWidth: 0.5
         )
       }
+      // Soft Shadow based on theme
+      .shadow(
+        color: theme == .ai ? .purple.opacity(0.2) : .black.opacity(0.05),
+        radius: 15, x: 0, y: 8
+      )
     }
   }
 
-  /// インタラクティブなフィードバックを有効化
+  /// Enable Interactive Feedback
   func interactive(_ enabled: Bool = true) -> some View {
     self.buttonStyle(LiquidGlassButtonStyle(enabled: enabled))
   }
 }
 
-/// Liquid Glass 専用のボタンスタイル
+/// Liquid Glass Button Style (Motion)
 struct LiquidGlassButtonStyle: ButtonStyle {
   let enabled: Bool
 
   func makeBody(configuration: Configuration) -> some View {
     configuration.label
-      .scaleEffect(enabled && configuration.isPressed ? 0.94 : 1.0)
+      .scaleEffect(enabled && configuration.isPressed ? 0.96 : 1.0)
       .opacity(enabled && configuration.isPressed ? 0.9 : 1.0)
       .animation(.spring(response: 0.3, dampingFraction: 0.6), value: configuration.isPressed)
   }
 }
 
-// MARK: - Compatibility Aliases
+// MARK: - Compatibility Aliases & Helpers
 
 extension View {
-  /// Alias for vibeGlassEffect to match existing usage
-  func glassEffect<S: Shape>(_ style: LiquidGlassStyle = .vibeGlassEffectStyle(), in shape: S)
-    -> some View
-  {
-    self.vibeGlassEffect(style, in: shape)
+  /// Global Alias for standard use
+  func glassEffect<S: Shape>(_ theme: LiquidGlassTheme = .standard, in shape: S) -> some View {
+    self.vibeGlassEffect(theme, in: shape)
   }
 
-  /// Convenience overload defaulting to RoundedRectangle
-  func glassEffect(_ style: LiquidGlassStyle = .vibeGlassEffectStyle(), cornerRadius: CGFloat = 12)
-    -> some View
-  {
+  /// Convenience overload (defaults to Standard theme, RoundedRectangle)
+  func glassEffect(_ theme: LiquidGlassTheme = .standard, cornerRadius: CGFloat = 12) -> some View {
     self.vibeGlassEffect(
-      style, in: RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
+      theme, in: RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
   }
 }
 
-extension LiquidGlassStyle {
-  static var regular: LiquidGlassStyle { .vibeGlassEffectStyle() }
-  static var clear: LiquidGlassStyle { .vibeGlassEffectStyle(tint: .clear) }
+// Extension to allow .regular / .clear syntax if strictly needed by existing code
+// However, it is recommended to migrate to .standard / .ai / .clear cases.
+extension LiquidGlassTheme {
+  static var regular: LiquidGlassTheme { .standard }
 }

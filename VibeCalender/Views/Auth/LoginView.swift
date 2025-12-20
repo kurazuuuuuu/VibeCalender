@@ -59,7 +59,9 @@ struct LoginView: View {
     .background(
       RoundedRectangle(cornerRadius: 24, style: .continuous)
         .fill(.ultraThinMaterial)
-        .glassEffect(SwiftUI.Glass.clear, in: RoundedRectangle(cornerRadius: 24, style: .continuous))
+        .glassEffect(
+          SwiftUI.Glass.clear, in: RoundedRectangle(cornerRadius: 24, style: .continuous)
+        )
         .shadow(color: Color.black.opacity(0.1), radius: 30, x: 0, y: 15)
     )
     .padding()

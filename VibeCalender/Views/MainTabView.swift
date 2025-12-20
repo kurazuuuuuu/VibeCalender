@@ -134,7 +134,7 @@ struct MainTabView: View {
     }
     .padding(.horizontal, 16)
     .padding(.vertical, 10)
-    .glassEffect(SwiftUI.Glass.regular, in: Capsule())
+    .glassEffect(.standard, in: Capsule())
     .overlay(
       Capsule()
         .stroke(Color.white.opacity(0.5), lineWidth: 0.5)

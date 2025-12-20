@@ -77,7 +77,7 @@ struct WeeklyCalendarView: View {
           .fontWeight(.semibold)
           .foregroundColor(.primary)
           .frame(width: 44, height: 44)
-          .glassEffect(SwiftUI.Glass.regular, in: RoundedRectangle(cornerRadius: 12))
+          .glassEffect(.standard, in: RoundedRectangle(cornerRadius: 12))
       }
 
       Spacer()
@@ -94,7 +94,7 @@ struct WeeklyCalendarView: View {
           .fontWeight(.semibold)
           .foregroundColor(.primary)
           .frame(width: 44, height: 44)
-          .glassEffect(SwiftUI.Glass.regular, in: RoundedRectangle(cornerRadius: 12))
+          .glassEffect(.standard, in: RoundedRectangle(cornerRadius: 12))
       }
     }
     .padding(.horizontal, 20)

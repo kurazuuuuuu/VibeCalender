@@ -36,7 +36,7 @@ struct AuthRootView: View {
             .padding()
         }
         .foregroundColor(.blue)
-        .glassEffect(SwiftUI.Glass.regular, in: Capsule())
+        .glassEffect(.standard, in: Capsule())
         .shadow(color: .blue.opacity(0.3), radius: 10, x: 0, y: 5)
         .interactive()
 

@@ -55,7 +55,7 @@ struct SignUpView: View {
         }
       }
       .foregroundColor(Color.blue)
-      .glassEffect(SwiftUI.Glass.regular, in: Capsule())
+      .glassEffect(.standard, in: Capsule())
       .shadow(color: .blue.opacity(0.3), radius: 10, x: 0, y: 5)
       .disabled(username.isEmpty || email.isEmpty || password.isEmpty || isLoading)
       .interactive()

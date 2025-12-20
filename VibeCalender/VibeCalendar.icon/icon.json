@@ -1,0 +1,36 @@
+{
+  "fill" : {
+    "automatic-gradient" : "extended-srgb:0.00000,0.53333,1.00000,1.00000"
+  },
+  "groups" : [
+    {
+      "layers" : [
+        {
+          "image-name" : "VibeCalendar_icon_svg 5.svg",
+          "name" : "VibeCalendar_icon_svg 5",
+          "position" : {
+            "scale" : 1,
+            "translation-in-points" : [
+              -46.960000000000036,
+              53.799999999999955
+            ]
+          }
+        }
+      ],
+      "shadow" : {
+        "kind" : "neutral",
+        "opacity" : 0.5
+      },
+      "translucency" : {
+        "enabled" : true,
+        "value" : 0.5
+      }
+    }
+  ],
+  "supported-platforms" : {
+    "circles" : [
+      "watchOS"
+    ],
+    "squares" : "shared"
+  }
+}
