@@ -8,20 +8,35 @@
 import SwiftUI
 
 struct FeedView: View {
-    let items: [TimelineFeedItem]
+    @State var items: [TimelineFeedItem]
     
     // In a real app, this would likely come from a ViewModel or EnvironmentObject
     init(items: [TimelineFeedItem] = TimelineFeedItem.mockItems()) {
-        self.items = items
+        _items = State(initialValue: items)
     }
     
     var body: some View {
-        List(items) { item in
-            PostRowView(post: item)
-                .listRowSeparator(.hidden)
-                .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
+        ScrollView {
+            LazyVStack(spacing: 16) {
+                ForEach($items) { $item in
+                    PostRowView(post: $item)
+                }
+            }
+            .padding(16)
+            // Bottom padding for tab bar
+            .padding(.bottom, 80)
         }
-        .listStyle(.plain)
+        .background(
+            LinearGradient(
+                colors: [
+                    Color(.systemBackground),
+                    Color(.systemGray6).opacity(0.3)
+                ],
+                startPoint: .top,
+                endPoint: .bottom
+            )
+            .ignoresSafeArea()
+        )
         .refreshable {
             // Future: Implement refresh logic
             try? await Task.sleep(nanoseconds: 1 * 1_000_000_000)
