@@ -13,4 +13,15 @@ class AppConfig: ObservableObject {
 
   // デバッグモードフラグ
   @Published var isDebugMode: Bool = true
+
+  // オンボーディング完了フラグ (UserDefaultsで永続化)
+  @Published var isOnboardingCompleted: Bool {
+    didSet {
+      UserDefaults.standard.set(isOnboardingCompleted, forKey: "isOnboardingCompleted")
+    }
+  }
+
+  init() {
+    self.isOnboardingCompleted = UserDefaults.standard.bool(forKey: "isOnboardingCompleted")
+  }
 }

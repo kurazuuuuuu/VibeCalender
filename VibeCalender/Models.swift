@@ -57,7 +57,9 @@ struct ProfileKeyword: Codable, Hashable, Sendable {
 /// ユーザーの行動嗜好プロファイル (AI学習用)
 struct UserProfile: Codable {
   var keywords: [ProfileKeyword]  // 構造化されたキーワード（趣味・興味）
-  var routines: [String] // 学校やバイトなどの固定ルーチン（生成には使わない）
+  var routines: [String]  // 学校やバイトなどの固定ルーチン（生成には使わない）
+  var masterKeywords: [String] = []  // オンボーディングで生成されたコア・インタレスト
+  var masterNarrative: String = ""  // オンボーディングから生成された「人物像」の自然言語記述
   var vibeDescription: String  // 全体的な雰囲気
 
   var interests: [String] {
@@ -67,6 +69,7 @@ struct UserProfile: Codable {
   static let empty = UserProfile(
     keywords: [],
     routines: [],
+    masterKeywords: [],
     vibeDescription: "まだ十分に学習されていません。"
   )
 }

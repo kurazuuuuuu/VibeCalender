@@ -9,12 +9,17 @@ import SwiftUI
 
 struct ContentView: View {
   @EnvironmentObject var eventManager: EventManager
+  @EnvironmentObject var appConfig: AppConfig
 
   var body: some View {
     Group {
       if eventManager.isAuthorized {
-        let _ = print("🚀 ContentView: showing MainTabView")
-        MainTabView()
+        if appConfig.isOnboardingCompleted {
+          let _ = print("🚀 ContentView: showing MainTabView")
+          MainTabView()
+        } else {
+          OnboardingView()
+        }
       } else {
         let _ = print("🚀 ContentView: showing AuthorizationView")
         // 認証待ち画面

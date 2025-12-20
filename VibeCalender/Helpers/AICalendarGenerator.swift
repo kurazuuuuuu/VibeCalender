@@ -32,44 +32,85 @@ class AICalendarGenerator {
 
   /// 指定された日時に対して、最適な予定を生成する (Async)
   func generateEvent(for date: Date) async -> GeneratedEvent? {
-    // 1. Core ML: 時系列データからのカテゴリ予測
-    guard let predictedCategory = predictor.predictCategory(for: date) else {
-      return nil
-    }
+    // 1. Core ML: 時系列データからのカテゴリ予測 (あくまでヒントとして取得)
+    let predictedCategory = predictor.predictCategory(for: date) ?? "Unknown"
 
-    // 2. Profile: ユーザーの嗜好データの取得
+    // 2. Profile: ユーザーの全プロファイル（ルーチン + 興味）の取得
     let profile = analyzer.loadProfile()
 
+    // プロンプト用のリスト整形
+    let routinesList = profile.routines.isEmpty ? "なし" : profile.routines.joined(separator: ", ")
+
+    let interestsList: String
+    var interestItems: [String] = []
+
+    // 1. Dynamic Keywords (Learning)
+    if !profile.keywords.isEmpty {
+      let dynamicItems = profile.keywords.map { keyword in
+        let locs =
+          keyword.locations.isEmpty ? "" : " (候補地: \(keyword.locations.joined(separator: "/")))"
+        return "- [Learned] \(keyword.name) [\(keyword.category)]\(locs)"
+      }
+      interestItems.append(contentsOf: dynamicItems)
+    }
+
+    // 2. Master Keywords (Onboarding)
+    if !profile.masterKeywords.isEmpty {
+      let masterItems = profile.masterKeywords.map { keyword in
+        return "- [Core Interest] \(keyword) (ユーザー自身が強く希望している分野)"
+      }
+      interestItems.append(contentsOf: masterItems)
+    }
+
+    interestsList = interestItems.isEmpty ? "なし" : interestItems.joined(separator: "\n")
+
     // 3. Foundation Model: 生成
-    // プロンプトの構築
+    // プロンプトの構築（LLM主導型）
     let prompt = """
-      あなたはユーザー自身です。
-      以下の「文脈」と「プロファイル」に基づいて、ユーザーが実際に遂行できるカレンダーに追加するプランを1つ追加してください。
+      あなたはユーザー自身（の意思決定エージェント）です。
+      「現在の日時」「過去の傾向(CoreML予測)」「ユーザープロファイル」に基づいて、
+      **今、カレンダーに入れるべき最適な予定（1件）** を決定・生成してください。
 
       【入力情報】
-      - 予想カテゴリ: \(predictedCategory)
-      - ユーザーの興味: \(profile.interests.joined(separator: ", "))
-      - 雰囲気(Vibe): \(profile.vibeDescription)
       - 日時: \(date.formatted(date: .complete, time: .omitted))
+      - AI予測カテゴリ(参考): \(predictedCategory)
 
-      【重要: 脱・退屈宣言】
-      - 「三者面談」「授業」「バイト」などの**義務的なキーワードは可能な限り無視**してください。もっと自由で楽しい時間を優先してください。
-      - 単調な予定はNGです。**「場所Aで〇〇して、そのあと場所Bで××する」**という風に、移動を含めたストーリー性のある内容にしてください。
+      【ユーザープロファイル】
+      [Routines: 義務・固定]
+      \(routinesList)
 
-      【指示: 場所と表現】
-      - **特定の地名（〇〇店など）は避け、汎用的な表現（「近所の公園」「駅前のカフェ」「川沿い」など）を使用してください。**
-      - **ゲーム名や作品名などは匿名化の例外となります。**
-      - 開始時刻と終了時刻は十分な時間を確保してください。例示の時間にとらわれず自由に設定してください。
-      - 出力は必ず以下のJSON形式のみで行ってください。
+      [Interests: 興味・関心]
+      \(interestsList)
 
-      【出力例】
+      [Vibe: 雰囲気]
+      \(profile.vibeDescription)
+
+      【意思決定プロセス】
+      1. **RoutinesかInterestsか**:
+         - まず、この日時が「Routines（学校、バイト等）」を入れるべき時間帯か判断してください。
+         - もし自由時間なら、CoreMLの予測にとらわれず、「Interests」の中から最適なものを選んでください。
+         - CoreMLが「Study」と予測しても、休日なら無視して「Interests」を優先するなど、人間らしい柔軟な判断をしてください。
+
+      2. **予定の具体化**:
+         - 「Interests」から選ぶ場合は、単にキーワードを使うのではなく、具体的なアクションに膨らませてください。
+         - 場所が記録されている場合はそれを活用し、なければ「近所の公園」「駅前のカフェ」など汎用的な表現を使ってください。
+         - 駅や店の具体的な固有名がある場合は**絶対に使用しないでください**人物名に関しても匿名化してください。
+         - ストーリー性を持たせ、「[場所]で[行動A]をして、そのあと[行動B]する」のような形式にしてください。
+         - **若者らしい言葉遣いを心がけてください。（例：チルい、アツい、ヤバい）**
+
+      【出力要件】
+      - 出力は以下のJSON形式のみ。
+      - **理由は不要です。予定の内容（description）のみ記述してください。**
+
+      # 以下はあくまで一例です。タイトル・時間・概要など絶対に流用せず、条件に従って生成してください。
+      【JSON出力例】
       {
-        "title": "人間観察",
-        "startHour": 11,
+        "title": "カフェ読書",
+        "startHour": 14,
         "startMinute": 0,
-        "endHour": 14,
-        "endMinute": 30,
-        "description": "まずは趣味の人間観察をする。その足で一番近くのラーメン屋に特攻し、一番辛いメニューを頼んで己の生存本能を呼び覚ます。"
+        "endHour": 17,
+        "endMinute": 0,
+        "description": "最近見つけた隠れ家カフェで、積読していた技術書を読む。そのあと近くの川沿いを散歩してリフレッシュする。"
       }
       """
 
@@ -88,8 +129,8 @@ class AICalendarGenerator {
 
       return GeneratedEvent(
         title: llmEvent.title,
-        category: predictedCategory,
-        notes: llmEvent.description + "\n(Based on \(predictedCategory))",
+        category: predictedCategory,  // CoreMLの結果はメタデータとして保持（分析用）
+        notes: llmEvent.description,
         startHour: llmEvent.startHour,
         startMinute: llmEvent.startMinute,
         endHour: llmEvent.endHour,

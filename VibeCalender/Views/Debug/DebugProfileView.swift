@@ -69,7 +69,13 @@ struct DebugProfileView: View {
               loadProfile()
             }
             Button("Generate Mock Memos (10)") {
-              MemoManager.shared.generateMockMemos()
+              Task {
+                await MemoManager.shared.generateMockMemos()
+              }
+            }
+            Divider()
+            Button("Reset Onboarding", role: .destructive) {
+              AppConfig.shared.isOnboardingCompleted = false
             }
           } label: {
             Image(systemName: "ellipsis.circle")

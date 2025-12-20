@@ -20,11 +20,11 @@ struct VibeCalenderApp: App {
         .preferredColorScheme(.light)
         .onAppear {
           // アプリ起動時の初期処理
-          performBackgroundTraining()
+          //          performBackgroundTraining()
         }
         .onChange(of: eventManager.isAuthorized) { isAuthorized in
           if isAuthorized {
-            performBackgroundTraining()
+            //          performBackgroundTraining()
           }
         }
     }
