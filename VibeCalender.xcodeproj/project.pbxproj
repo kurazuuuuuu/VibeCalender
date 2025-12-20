@@ -6,6 +6,10 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		CE4C2A182EF651A900ABA49F /* DAWNText in Frameworks */ = {isa = PBXBuildFile; productRef = CE4C2A172EF651A900ABA49F /* DAWNText */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXFileReference section */
 		4E32A8F12EF2332D000099AC /* VibeCalender.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = VibeCalender.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
@@ -36,6 +40,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				CE4C2A182EF651A900ABA49F /* DAWNText in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -46,6 +51,7 @@
 			isa = PBXGroup;
 			children = (
 				4E32A8F32EF2332D000099AC /* VibeCalender */,
+				CE4C2A902EF65BE700ABA49F /* Frameworks */,
 				4E32A8F22EF2332D000099AC /* Products */,
 			);
 			sourceTree = "<group>";
@@ -56,6 +62,13 @@
 				4E32A8F12EF2332D000099AC /* VibeCalender.app */,
 			);
 			name = Products;
+			sourceTree = "<group>";
+		};
+		CE4C2A902EF65BE700ABA49F /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Frameworks;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -78,6 +91,7 @@
 			);
 			name = VibeCalender;
 			packageProductDependencies = (
+				CE4C2A172EF651A900ABA49F /* DAWNText */,
 			);
 			productName = VibeCalender;
 			productReference = 4E32A8F12EF2332D000099AC /* VibeCalender.app */;
@@ -107,6 +121,9 @@
 			);
 			mainGroup = 4E32A8E82EF2332D000099AC;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				CE4C2A162EF651A900ABA49F /* XCRemoteSwiftPackageReference "DAWNText" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 4E32A8F22EF2332D000099AC /* Products */;
 			projectDirPath = "";
@@ -349,6 +366,25 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		CE4C2A162EF651A900ABA49F /* XCRemoteSwiftPackageReference "DAWNText" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/noppefoxwolf/DAWNText";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 0.7.3;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		CE4C2A172EF651A900ABA49F /* DAWNText */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = CE4C2A162EF651A900ABA49F /* XCRemoteSwiftPackageReference "DAWNText" */;
+			productName = DAWNText;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 4E32A8E92EF2332D000099AC /* Project object */;
 }
