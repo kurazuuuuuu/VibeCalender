@@ -46,16 +46,23 @@ struct ScheduleEvent: Codable, Identifiable, Sendable {
 }
 
 // MARK: - UserProfile
-/// 学習データ（ユーザー傾向エンコード）
-struct UserProfile: Codable, Sendable {
-  var userId: String
-  var encodedPreferences: String  // LLM用エンコード済みデータ
-  var lastUpdated: Date
+/// ユーザーの行動嗜好プロファイル (AI学習用)
+struct UserProfile: Codable {
+  var interests: [String]  // 全体的な興味・関心
+  var categoryKeywords: [String: [String]]  // カテゴリごとの頻出キーワードマップ
+  var frequentLocations: [String]  // よく行く場所
+  var vibeDescription: String  // 全体的な雰囲気
 
-  enum CodingKeys: String, CodingKey {
-    case userId = "user_id"
-    case encodedPreferences = "encoded_preferences"
-    case lastUpdated = "last_updated"
+  static let empty = UserProfile(
+    interests: [],
+    categoryKeywords: [:],
+    frequentLocations: [],
+    vibeDescription: "まだ十分に学習されていません。"
+  )
+
+  // Core MLカテゴリごとの好みを定義
+  func getKeywords(for category: String) -> [String] {
+    return categoryKeywords[category] ?? interests
   }
 }
 
@@ -90,8 +97,21 @@ struct RegisterRequest: Codable {
   var password: String
 }
 
-/// 認証レスポンス
 struct AuthResponse: Codable {
   var token: String
   var user: User
+}
+
+// MARK: - Memo
+/// ユーザーメモ (AI学習用データソース)
+struct Memo: Codable, Identifiable {
+  var id: UUID
+  var content: String
+  var date: Date
+  
+  init(id: UUID = UUID(), content: String, date: Date = Date()) {
+    self.id = id
+    self.content = content
+    self.date = date
+  }
 }

@@ -18,7 +18,9 @@ struct MainTabView: View {
       case 0:
         WeeklyCalendarView()
       case 1:
-        FeedView()
+        TimelineView()
+      case 2:
+        MemoListView()
       default:
         WeeklyCalendarView()
       }
@@ -35,7 +37,7 @@ struct MainTabView: View {
     }
     .preferredColorScheme(.light)
     .sheet(isPresented: $showAddSheet) {
-      EventEditView()
+      AIDateInputView()
         .preferredColorScheme(.light)
     }
   }
@@ -43,18 +45,18 @@ struct MainTabView: View {
   private var gradientBackground: some View {
     Color.clear
       .background(.ultraThinMaterial)
-      .compositingGroup() // レンダリングを平滑化し、境界線のアーティファクトを防ぐ
+      .compositingGroup()  // レンダリングを平滑化し、境界線のアーティファクトを防ぐ
       .mask(
         LinearGradient(
           stops: [
             .init(color: .black.opacity(0), location: 0),
-            .init(color: .black.opacity(0), location: 0.45), // 画面中央付近まで完全に透明
-            .init(color: .black.opacity(0.01), location: 0.5), // 極めて薄いグラデーションから開始
+            .init(color: .black.opacity(0), location: 0.45),  // 画面中央付近まで完全に透明
+            .init(color: .black.opacity(0.01), location: 0.5),  // 極めて薄いグラデーションから開始
             .init(color: .black.opacity(0.05), location: 0.55),
             .init(color: .black.opacity(0.15), location: 0.65),
             .init(color: .black.opacity(0.4), location: 0.8),
             .init(color: .black.opacity(0.8), location: 0.95),
-            .init(color: .black, location: 1.0)
+            .init(color: .black, location: 1.0),
           ],
           startPoint: .top,
           endPoint: .bottom
@@ -85,6 +87,16 @@ struct MainTabView: View {
       ) {
         withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
           selectedTab = 1
+        }
+      }
+
+      GlassTabButton(
+        icon: "note.text",
+        title: "メモ",
+        isSelected: selectedTab == 2
+      ) {
+        withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+          selectedTab = 2
         }
       }
 
