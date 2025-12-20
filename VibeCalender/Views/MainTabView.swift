@@ -18,7 +18,7 @@ struct MainTabView: View {
       case 0:
         WeeklyCalendarView()
       case 1:
-        TimelineView()
+        FeedView()
       default:
         WeeklyCalendarView()
       }
@@ -80,7 +80,7 @@ struct MainTabView: View {
 
       GlassTabButton(
         icon: "clock",
-        title: "タイムライン",
+        title: "フィード",
         isSelected: selectedTab == 1
       ) {
         withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {

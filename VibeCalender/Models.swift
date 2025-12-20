@@ -9,7 +9,7 @@ import Foundation
 
 // MARK: - User
 /// ユーザー情報
-struct User: Codable, Identifiable {
+struct User: Codable, Identifiable, Sendable {
   let id: String
   var username: String
   var email: String
@@ -23,7 +23,7 @@ struct User: Codable, Identifiable {
 
 // MARK: - ScheduleEvent
 /// 予定データ（API連携用）
-struct ScheduleEvent: Codable, Identifiable {
+struct ScheduleEvent: Codable, Identifiable, Sendable {
   let id: String
   var userId: String
   var title: String
@@ -47,7 +47,7 @@ struct ScheduleEvent: Codable, Identifiable {
 
 // MARK: - UserProfile
 /// 学習データ（ユーザー傾向エンコード）
-struct UserProfile: Codable {
+struct UserProfile: Codable, Sendable {
   var userId: String
   var encodedPreferences: String  // LLM用エンコード済みデータ
   var lastUpdated: Date
@@ -61,7 +61,7 @@ struct UserProfile: Codable {
 
 // MARK: - TimelinePost
 /// タイムライン投稿
-struct TimelinePost: Codable, Identifiable {
+struct TimelinePost: Codable, Identifiable, Sendable {
   let id: String
   var userId: String
   var eventId: String
