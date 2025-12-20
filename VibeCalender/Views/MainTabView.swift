@@ -18,7 +18,7 @@ struct MainTabView: View {
       case 0:
         WeeklyCalendarView()
       case 1:
-        TimelineView()
+        FeedView()
       case 2:
         MemoListView()
       default:
@@ -170,35 +170,6 @@ struct GlassTabButton: View {
       .contentShape(Capsule())  // 全域をタップ可能にする
     }
     .buttonStyle(LiquidGlassButtonStyle(enabled: true))  // 常にインタラクションを有効にする
-  }
-}
-
-// MARK: - プレースホルダービュー
-
-struct TimelineView: View {
-  var body: some View {
-    ScrollView {
-      VStack(spacing: 20) {
-        Spacer(minLength: 100)
-        ZStack {
-          Circle()
-            .glassEffect(.regular, in: Circle())
-            .frame(width: 100, height: 100)
-
-          Image(systemName: "clock.arrow.circlepath")
-            .font(.system(size: 40))
-            .foregroundStyle(Color.gray)
-        }
-        Text("タイムライン")
-          .font(.title2)
-          .fontWeight(.bold)
-        Text("Coming soon...")
-          .font(.subheadline)
-          .foregroundColor(.secondary)
-      }
-      .frame(maxWidth: .infinity)
-    }
-    .background(Color(.systemBackground))
   }
 }
 
