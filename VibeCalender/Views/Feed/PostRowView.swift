@@ -9,57 +9,107 @@ import SwiftUI
 import DAWNText
 
 struct PostRowView: View {
-    let post: TimelineFeedItem
+    @Binding var post: TimelineFeedItem
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            // Header: Author and Time
-            HStack {
-                Circle()
-                    .fill(Color.gray.opacity(0.3))
-                    .frame(width: 40, height: 40)
-                    .overlay(Text(post.authorName.prefix(1)).font(.headline))
+        HStack(alignment: .top, spacing: 12) {
+            // Avatar
+            Circle()
+                .fill(.ultraThinMaterial)
+                .frame(width: 40, height: 40)
+                .overlay(
+                    Text(post.authorName.prefix(1))
+                        .font(.headline)
+                        .foregroundStyle(.primary)
+                )
+                .overlay(
+                    Circle()
+                        .stroke(.white.opacity(0.3), lineWidth: 1)
+                )
+            
+            VStack(alignment: .leading, spacing: 6) {
+                // Header (Name + ID) - Timestamp removed
+                HStack(spacing: 4) {
+                    Text(post.authorName)
+                        .font(.subheadline)
+                        .fontWeight(.semibold)
+                        .foregroundStyle(.primary)
+                    
+                    Text(post.authorID)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                    
+                    Spacer()
+                }
                 
-                VStack(alignment: .leading, spacing: 2) {
-                    HStack(alignment: .firstTextBaseline) {
-                        Text(post.authorName)
-                            .font(.headline)
-                            .foregroundColor(.primary)
-                        
-                        Text(post.authorID)
-                            .font(.subheadline)
-                            .foregroundColor(.secondary)
+                // Content
+                Text(post.content)
+                    .font(.body)
+                    .foregroundStyle(.primary)
+                    .fixedSize(horizontal: false, vertical: true)
+                
+                // Footer (Reaction)
+                HStack {
+                    Menu {
+                        ForEach(ReactionType.allCases, id: \.self) { reaction in
+                            Button(action: {
+                                if post.selectedReaction == reaction {
+                                    // Toggle off
+                                    post.selectedReaction = nil
+                                    post.likes -= 1
+                                } else {
+                                    // New or Change
+                                    if post.selectedReaction == nil {
+                                        post.likes += 1
+                                    }
+                                    post.selectedReaction = reaction
+                                }
+                            }) {
+                                HStack {
+                                    Text(reaction.rawValue)
+                                    if post.selectedReaction == reaction {
+                                        Image(systemName: "checkmark")
+                                    }
+                                }
+                            }
+                        }
+                    } label: {
+                        HStack(spacing: 4) {
+                            if let reaction = post.selectedReaction {
+                                Text(reaction.rawValue)
+                                    .font(.body)
+                            } else {
+                                Image(systemName: "hand.thumbsup")
+                                    .font(.caption)
+                            }
+                            
+                            if post.likes > 0 {
+                                Text("\(post.likes)")
+                                    .font(.caption)
+                            }
+                        }
+                        .foregroundStyle(post.selectedReaction != nil ? .primary : .secondary)
+                        .padding(.vertical, 6)
+                        .padding(.horizontal, 10)
+                        .background(
+                            Capsule()
+                                .fill(.ultraThinMaterial)
+                                .overlay(
+                                    Capsule()
+                                        .stroke(Color.white.opacity(0.3), lineWidth: 0.5)
+                                )
+                        )
                     }
                     
-                    Text(post.timestamp.formatted())
-                        .font(.caption)
-                        .foregroundColor(.gray)
+                    Spacer()
                 }
-                
-                Spacer()
-                
-                Button(action: {}) {
-                    Image(systemName: "ellipsis")
-                        .foregroundColor(.secondary)
-                }
+                .padding(.top, 4)
             }
-            
-            // Content using standard Text temporarily to fix build error (DAWN not found)
-            Text(post.content)
-                .font(.body)
-                .foregroundColor(.primary) 
-            
-            // Footer: Actions
-            HStack(spacing: 20) {
-                ActionButton(icon: "bubble.right", text: "\(post.replies)")
-                ActionButton(icon: "arrow.2.squarepath", text: "")
-                ActionButton(icon: "heart", text: "\(post.likes)")
-                ActionButton(icon: "square.and.arrow.up", text: "")
-                Spacer()
-            }
-            .padding(.top, 4)
         }
-        .padding(.vertical, 8)
+        .padding(16)
+        // Apply Liquid Glass Effect with Category Tint
+        .vibeGlassEffect(.vibeGlassEffectStyle(tint: post.category.color), in: RoundedRectangle(cornerRadius: 20, style: .continuous))
+        .shadow(color: Color.black.opacity(0.1), radius: 8, x: 0, y: 4)
     }
 }
 
@@ -81,6 +131,6 @@ struct ActionButton: View {
 
 // Preview requires manual DAWNText setup or mock, standard preview might fail if lib not built
 #Preview {
-    PostRowView(post: TimelineFeedItem.mockItems()[0])
+    PostRowView(post: .constant(TimelineFeedItem.mockItems()[0]))
         .padding()
 }
