@@ -1,2 +1,8 @@
 # SweetPad
 buildServer.json
+
+# MacOS
+.DS_Store
+
+# serena
+.serena/

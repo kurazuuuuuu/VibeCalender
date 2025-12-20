@@ -82,7 +82,7 @@ struct MainTabView: View {
 
       GlassTabButton(
         icon: "clock",
-        title: "タイムライン",
+        title: "フィード",
         isSelected: selectedTab == 1
       ) {
         withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
