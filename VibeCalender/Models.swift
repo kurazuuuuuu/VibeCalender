@@ -74,6 +74,19 @@ struct UserProfile: Codable {
   )
 }
 
+/// Backend用 UserProfile DTO
+struct APIUserProfile: Codable {
+  var userId: String
+  var encodedPreferences: String
+  var lastUpdated: Date
+
+  enum CodingKeys: String, CodingKey {
+    case userId = "user_id"
+    case encodedPreferences = "encoded_preferences"
+    case lastUpdated = "last_updated"
+  }
+}
+
 // MARK: - TimelinePost
 /// タイムライン投稿
 struct TimelinePost: Codable, Identifiable, Sendable {

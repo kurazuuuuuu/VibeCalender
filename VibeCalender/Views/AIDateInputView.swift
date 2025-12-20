@@ -38,7 +38,7 @@ struct AIDateInputView: View {
 
             Spacer()
 
-            Text("AI 自動生成")
+            Text("予定を追加")
               .font(.headline)
 
             Spacer()
@@ -51,7 +51,7 @@ struct AIDateInputView: View {
 
           Spacer()
 
-          Text("いつの予定を作りますか？")
+          Text("いつの予定を作りたいですか？")
             .font(.title2)
             .fontWeight(.bold)
 
@@ -75,7 +75,7 @@ struct AIDateInputView: View {
           Button(action: performAIGeneration) {
             HStack {
               Image(systemName: "sparkles")
-              Text("予定を生成する")
+              Text("予定を追加する...？")
             }
             .font(.headline)
             .foregroundStyle(.white)
@@ -97,7 +97,7 @@ struct AIDateInputView: View {
         .zIndex(0)
       }
     }
-    .alert("AI エラー", isPresented: $showError) {
+    .alert("勝手に予定を追加できません...", isPresented: $showError) {
       Button("OK", role: .cancel) {}
     } message: {
       Text(errorMessage)
@@ -143,12 +143,12 @@ struct AIDateInputView: View {
     // Hybrid Generation: Core ML + User Profile (LLM)
     guard let generatedEvent = await AICalendarGenerator.shared.generateEvent(for: selectedDate)
     else {
-      handleError("AIが応答できませんでした。")
+      handleError("勝手に予定を追加できませんでした...")
       return
     }
 
     withAnimation {
-      loadingMessage = "ひらめきました: \(generatedEvent.title)"
+      loadingMessage = "勝手に予定を思いつきました...ッ！: \(generatedEvent.title)"
     }
 
     // 日付 (Year/Month/Day) を selectedDate から、時間 (Hour/Minute) を GeneratedEvent から取得して結合

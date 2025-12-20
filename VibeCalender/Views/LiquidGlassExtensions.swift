@@ -90,3 +90,27 @@ struct LiquidGlassButtonStyle: ButtonStyle {
       .animation(.spring(response: 0.3, dampingFraction: 0.6), value: configuration.isPressed)
   }
 }
+
+// MARK: - Compatibility Aliases
+
+extension View {
+  /// Alias for vibeGlassEffect to match existing usage
+  func glassEffect<S: Shape>(_ style: LiquidGlassStyle = .vibeGlassEffectStyle(), in shape: S)
+    -> some View
+  {
+    self.vibeGlassEffect(style, in: shape)
+  }
+
+  /// Convenience overload defaulting to RoundedRectangle
+  func glassEffect(_ style: LiquidGlassStyle = .vibeGlassEffectStyle(), cornerRadius: CGFloat = 12)
+    -> some View
+  {
+    self.vibeGlassEffect(
+      style, in: RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
+  }
+}
+
+extension LiquidGlassStyle {
+  static var regular: LiquidGlassStyle { .vibeGlassEffectStyle() }
+  static var clear: LiquidGlassStyle { .vibeGlassEffectStyle(tint: .clear) }
+}
