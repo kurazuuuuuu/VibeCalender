@@ -10,11 +10,13 @@ import SwiftUI
 @main
 struct VibeCalenderApp: App {
   @StateObject private var eventManager = EventManager()
+  @StateObject private var appConfig = AppConfig.shared
 
   var body: some Scene {
     WindowGroup {
       ContentView()
         .environmentObject(eventManager)
+        .environmentObject(appConfig)
         .preferredColorScheme(.light)
         .onAppear {
           // アプリ起動時の初期処理

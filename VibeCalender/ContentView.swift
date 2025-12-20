@@ -13,8 +13,10 @@ struct ContentView: View {
   var body: some View {
     Group {
       if eventManager.isAuthorized {
+        let _ = print("🚀 ContentView: showing MainTabView")
         MainTabView()
       } else {
+        let _ = print("🚀 ContentView: showing AuthorizationView")
         // 認証待ち画面
         authorizationView
       }

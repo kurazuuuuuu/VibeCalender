@@ -46,24 +46,29 @@ struct ScheduleEvent: Codable, Identifiable, Sendable {
 }
 
 // MARK: - UserProfile
+// MARK: - ProfileKeyword
+struct ProfileKeyword: Codable, Hashable, Sendable {
+  var name: String
+  var category: String
+  var locations: [String]
+}
+
+// MARK: - UserProfile
 /// ユーザーの行動嗜好プロファイル (AI学習用)
 struct UserProfile: Codable {
-  var interests: [String]  // 全体的な興味・関心
-  var categoryKeywords: [String: [String]]  // カテゴリごとの頻出キーワードマップ
-  var frequentLocations: [String]  // よく行く場所
+  var keywords: [ProfileKeyword]  // 構造化されたキーワード（趣味・興味）
+  var routines: [String] // 学校やバイトなどの固定ルーチン（生成には使わない）
   var vibeDescription: String  // 全体的な雰囲気
 
+  var interests: [String] {
+    keywords.map { $0.name }
+  }
+
   static let empty = UserProfile(
-    interests: [],
-    categoryKeywords: [:],
-    frequentLocations: [],
+    keywords: [],
+    routines: [],
     vibeDescription: "まだ十分に学習されていません。"
   )
-
-  // Core MLカテゴリごとの好みを定義
-  func getKeywords(for category: String) -> [String] {
-    return categoryKeywords[category] ?? interests
-  }
 }
 
 // MARK: - TimelinePost
@@ -108,7 +113,7 @@ struct Memo: Codable, Identifiable {
   var id: UUID
   var content: String
   var date: Date
-  
+
   init(id: UUID = UUID(), content: String, date: Date = Date()) {
     self.id = id
     self.content = content

@@ -26,6 +26,7 @@ class EventManager: ObservableObject {
   init() {
     // 起動時に現在のステータスを即座に反映
     updateStatus()
+
     loadCalendars()
 
     // 認証が必要な場合のみリクエスト
@@ -206,7 +207,10 @@ class EventPredictor {
   }
 
   init() {
-    loadModel()
+    // 初期化時は重い処理を避けるため、バックグラウンドでロード開始
+    Task.detached(priority: .userInitiated) {
+      await self.loadModel()
+    }
   }
 
   private func loadModel() {
@@ -335,7 +339,10 @@ class EventPredictor {
         )
         updateTask.resume()
       } catch {
-        print("Failed to start training task: \(error)")
+        // 更新可能モデルでない場合はエラーになるが、アプリの動作には影響させない
+        print(
+          "⚠️ Training skipped (Model is not updatable or other error): \(error.localizedDescription)"
+        )
         continuation.resume()
       }
     }

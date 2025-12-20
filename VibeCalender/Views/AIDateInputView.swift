@@ -58,7 +58,7 @@ struct AIDateInputView: View {
           DatePicker(
             "日付を選択",
             selection: $selectedDate,
-            displayedComponents: [.date, .hourAndMinute]
+            displayedComponents: [.date]
           )
           .datePickerStyle(.graphical)
           .environment(\.locale, Locale(identifier: "ja_JP"))
@@ -133,7 +133,7 @@ struct AIDateInputView: View {
       // 4. 生成実行 (Main Actor)
       await MainActor.run {
         Task {
-            await generateEvent()
+          await generateEvent()
         }
       }
     }
@@ -151,8 +151,38 @@ struct AIDateInputView: View {
       loadingMessage = "ひらめきました: \(generatedEvent.title)"
     }
 
-    let newStartDate = selectedDate
-    let newEndDate = selectedDate.addingTimeInterval(generatedEvent.duration)
+    // 日付 (Year/Month/Day) を selectedDate から、時間 (Hour/Minute) を GeneratedEvent から取得して結合
+    var calendar = Calendar.current
+    calendar.timeZone = TimeZone.current  // ユーザーの現在地タイムゾーン
+
+    let baseComponents = calendar.dateComponents([.year, .month, .day], from: selectedDate)
+    var finalComponents = DateComponents()
+    finalComponents.year = baseComponents.year
+    finalComponents.month = baseComponents.month
+    finalComponents.day = baseComponents.day
+    finalComponents.hour = generatedEvent.startHour
+    finalComponents.minute = generatedEvent.startMinute
+
+    var finalStartComponents = DateComponents()
+    finalStartComponents.year = baseComponents.year
+    finalStartComponents.month = baseComponents.month
+    finalStartComponents.day = baseComponents.day
+    finalStartComponents.hour = generatedEvent.startHour
+    finalStartComponents.minute = generatedEvent.startMinute
+
+    var finalEndComponents = DateComponents()
+    finalEndComponents.year = baseComponents.year
+    finalEndComponents.month = baseComponents.month
+    finalEndComponents.day = baseComponents.day
+    finalEndComponents.hour = generatedEvent.endHour
+    finalEndComponents.minute = generatedEvent.endMinute
+
+    let newStartDate = calendar.date(from: finalStartComponents) ?? selectedDate
+    // 日付をまたぐ場合（終了時間が開始時間より前）は翌日に設定する安全策
+    var newEndDate = calendar.date(from: finalEndComponents) ?? selectedDate
+    if newEndDate < newStartDate {
+      newEndDate = calendar.date(byAdding: .day, value: 1, to: newEndDate) ?? newEndDate
+    }
 
     // 保存
     do {
