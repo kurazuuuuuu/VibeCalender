@@ -9,7 +9,7 @@ import Foundation
 
 // MARK: - User
 /// ユーザー情報
-struct User: Codable, Identifiable {
+struct User: Codable, Identifiable, Sendable {
   let id: String
   var username: String
   var email: String
@@ -23,7 +23,7 @@ struct User: Codable, Identifiable {
 
 // MARK: - ScheduleEvent
 /// 予定データ（API連携用）
-struct ScheduleEvent: Codable, Identifiable {
+struct ScheduleEvent: Codable, Identifiable, Sendable {
   let id: String
   var userId: String
   var title: String
@@ -46,22 +46,37 @@ struct ScheduleEvent: Codable, Identifiable {
 }
 
 // MARK: - UserProfile
-/// 学習データ（ユーザー傾向エンコード）
-struct UserProfile: Codable {
-  var userId: String
-  var encodedPreferences: String  // LLM用エンコード済みデータ
-  var lastUpdated: Date
+// MARK: - ProfileKeyword
+struct ProfileKeyword: Codable, Hashable, Sendable {
+  var name: String
+  var category: String
+  var locations: [String]
+}
 
-  enum CodingKeys: String, CodingKey {
-    case userId = "user_id"
-    case encodedPreferences = "encoded_preferences"
-    case lastUpdated = "last_updated"
+// MARK: - UserProfile
+/// ユーザーの行動嗜好プロファイル (AI学習用)
+struct UserProfile: Codable {
+  var keywords: [ProfileKeyword]  // 構造化されたキーワード（趣味・興味）
+  var routines: [String]  // 学校やバイトなどの固定ルーチン（生成には使わない）
+  var masterKeywords: [String] = []  // オンボーディングで生成されたコア・インタレスト
+  var masterNarrative: String = ""  // オンボーディングから生成された「人物像」の自然言語記述
+  var vibeDescription: String  // 全体的な雰囲気
+
+  var interests: [String] {
+    keywords.map { $0.name }
   }
+
+  static let empty = UserProfile(
+    keywords: [],
+    routines: [],
+    masterKeywords: [],
+    vibeDescription: "まだ十分に学習されていません。"
+  )
 }
 
 // MARK: - TimelinePost
 /// タイムライン投稿
-struct TimelinePost: Codable, Identifiable {
+struct TimelinePost: Codable, Identifiable, Sendable {
   let id: String
   var userId: String
   var eventId: String
@@ -90,8 +105,21 @@ struct RegisterRequest: Codable {
   var password: String
 }
 
-/// 認証レスポンス
 struct AuthResponse: Codable {
   var token: String
   var user: User
+}
+
+// MARK: - Memo
+/// ユーザーメモ (AI学習用データソース)
+struct Memo: Codable, Identifiable {
+  var id: UUID
+  var content: String
+  var date: Date
+
+  init(id: UUID = UUID(), content: String, date: Date = Date()) {
+    self.id = id
+    self.content = content
+    self.date = date
+  }
 }
