@@ -61,6 +61,10 @@ struct WeeklyCalendarView: View {
     .onAppear {
       loadEvents()
     }
+    .onReceive(NotificationCenter.default.publisher(for: .EKEventStoreChanged)) { _ in
+      // 外部での変更を検知してリロード
+      loadEvents()
+    }
   }
 
   // MARK: - ヘッダー（月切り替え）
