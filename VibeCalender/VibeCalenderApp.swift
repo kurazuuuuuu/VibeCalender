@@ -17,6 +17,7 @@ struct VibeCalenderApp: App {
         .environmentObject(eventManager)
         .environmentObject(appConfig)
         .environmentObject(AuthManager.shared)
+        .iconPlaygroundSheet()
     }
   }
 }

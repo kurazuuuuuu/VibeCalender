@@ -18,13 +18,16 @@ struct TimelineFeedItem: Identifiable, Hashable, Sendable {
   let timestamp: Date
   var likes: Int
   let replies: Int
-  let category: PostCategory
+  let category: String
   var selectedReaction: ReactionType?
+  var iconUrl: String?
+  var eventDate: String?
+  var colorHex: String?
 
-  // MARK: - Initializer
   init(
     id: String, authorName: String, authorID: String, content: String, timestamp: Date, likes: Int,
-    replies: Int, category: PostCategory, selectedReaction: ReactionType?
+    replies: Int, category: String, selectedReaction: ReactionType? = nil,
+    iconUrl: String? = nil, eventDate: String? = nil, colorHex: String? = nil
   ) {
     self.id = id
     self.authorName = authorName
@@ -35,11 +38,14 @@ struct TimelineFeedItem: Identifiable, Hashable, Sendable {
     self.replies = replies
     self.category = category
     self.selectedReaction = selectedReaction
+    self.iconUrl = iconUrl
+    self.eventDate = eventDate
+    self.colorHex = colorHex
   }
 
   init(
     post: TimelinePost, user: User, likes: Int = 0, replies: Int = 0,
-    category: PostCategory = .daily, selectedReaction: ReactionType? = nil
+    category: String? = nil, selectedReaction: ReactionType? = nil
   ) {
     self.id = post.id
     self.authorName = user.username
@@ -48,8 +54,11 @@ struct TimelineFeedItem: Identifiable, Hashable, Sendable {
     self.timestamp = post.createdAt
     self.likes = likes
     self.replies = replies
-    self.category = category
+    self.category = category ?? post.category ?? "日常"
     self.selectedReaction = selectedReaction
+    self.iconUrl = post.iconUrl
+    self.eventDate = post.eventDate
+    self.colorHex = post.colorHex
   }
 
   // MARK: - Mock Data Helper
@@ -76,20 +85,29 @@ struct TimelineFeedItem: Identifiable, Hashable, Sendable {
 
     return [
       TimelineFeedItem(
-        post: post1, user: user1, likes: 12, replies: 2, category: .work,
+        post: post1, user: user1, likes: 12, replies: 2, category: "仕事",
         selectedReaction: .thumbsUp),
-      TimelineFeedItem(post: post2, user: user2, likes: 25, replies: 5, category: .play),
+      TimelineFeedItem(post: post2, user: user2, likes: 25, replies: 5, category: "遊び"),
       TimelineFeedItem(
-        post: post3, user: user3, likes: 99, replies: 0, category: .daily, selectedReaction: .point),
+        post: post3, user: user3, likes: 99, replies: 0, category: "日常", selectedReaction: .point),
     ]
   }
 }
 
 enum ReactionType: String, CaseIterable, Codable, Sendable {
-  case point = "🫵"
-  case thumbsUp = "👍"
-  case hand = "✋"
-  case pinch = "🤏"
+  case point
+  case thumbsUp
+  case hand
+  case pinch
+
+  var emoji: String {
+    switch self {
+    case .point: return "🫵"
+    case .thumbsUp: return "👍"
+    case .hand: return "✋"
+    case .pinch: return "🤏"
+    }
+  }
 }
 
 enum PostCategory: String, CaseIterable, Codable, Sendable {

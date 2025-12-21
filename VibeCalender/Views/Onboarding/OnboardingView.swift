@@ -302,7 +302,7 @@ class BubbleLayoutEngine: ObservableObject {
 
   @Published var nodes: [Node] = []
 
-  // グリッド配置アルゴリズム (2列 x 3行 = 6個)
+  // グリッド配置アルゴリズム (3列 x 3行 = 9個)
   func initialize(words: [String], in containerSize: CGSize) {
     var newNodes: [Node] = []
 
@@ -315,7 +315,7 @@ class BubbleLayoutEngine: ObservableObject {
     let availableHeight = containerSize.height - topMargin - bottomMargin
 
     // グリッド設定
-    let columns = 2
+    let columns = 3
     let rows = 3
     let cellWidth = availableWidth / CGFloat(columns)
     let cellHeight = availableHeight / CGFloat(rows)

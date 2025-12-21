@@ -33,6 +33,7 @@ struct ScheduleEvent: Codable, Identifiable, Sendable {
   var isAIGenerated: Bool  // AI生成フラグ
   var ekEventId: String?  // EventKit連携用
   var createdAt: Date
+  var colorHex: String?
 
   enum CodingKeys: String, CodingKey {
     case id, title, category
@@ -42,6 +43,7 @@ struct ScheduleEvent: Codable, Identifiable, Sendable {
     case isAIGenerated = "is_ai_generated"
     case ekEventId = "ek_event_id"
     case createdAt = "created_at"
+    case colorHex = "color_hex"
   }
 }
 
@@ -95,12 +97,19 @@ struct TimelinePost: Codable, Identifiable, Sendable {
   var eventId: String
   var content: String  // 匿名化された予定内容
   var createdAt: Date
+  var category: String?
+  var iconUrl: String?
+  var eventDate: String?
+  var colorHex: String?
 
   enum CodingKeys: String, CodingKey {
-    case id, content
+    case id, content, category
     case userId = "user_id"
     case eventId = "event_id"
     case createdAt = "created_at"
+    case iconUrl = "icon_url"
+    case eventDate = "event_date"
+    case colorHex = "color_hex"
   }
 }
 

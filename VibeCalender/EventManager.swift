@@ -114,7 +114,9 @@ class EventManager: ObservableObject {
     endDate: Date,
     calendar: EKCalendar? = nil,
     notes: String? = nil,
-    isAIGenerated: Bool = false
+    isAIGenerated: Bool = false,
+    colorHex: String? = nil,
+    category: String? = nil
   ) throws -> EKEvent {
     let event = EKEvent(eventStore: store)
     event.title = title
@@ -132,18 +134,49 @@ class EventManager: ObservableObject {
 
     // バックエンド同期
     Task {
-      await syncCreateEvent(event, isAIGenerated: isAIGenerated)
+      await syncCreateEvent(
+        event, isAIGenerated: isAIGenerated, colorHex: colorHex, category: category)
     }
 
     return event
   }
 
-  private func syncCreateEvent(_ ekEvent: EKEvent, isAIGenerated: Bool) async {
+  private func syncCreateEvent(
+    _ ekEvent: EKEvent, isAIGenerated: Bool, colorHex: String?, category: String?
+  ) async {
     guard !currentUserId.isEmpty else { return }
-    let scheduleEvent = convertToScheduleEvent(ekEvent, isAIGenerated: isAIGenerated)
+    let scheduleEvent = convertToScheduleEvent(
+      ekEvent, isAIGenerated: isAIGenerated, colorHex: colorHex, category: category)
     do {
-      _ = try await apiClient.createEvent(event: scheduleEvent)
+      let createdEvent = try await apiClient.createEvent(event: scheduleEvent)
       print("Event synced to backend: \(scheduleEvent.title), isAI: \(isAIGenerated)")
+
+      // AI生成の場合、付随するタイムライン投稿にアイコンを設定する
+      if isAIGenerated {
+        Task {
+          print("🔍 AI Event detected, waiting for timeline post to be created...")
+          // 少し待ってから（バックエンドの処理完了を待つ）
+          try? await Task.sleep(nanoseconds: 2 * 1_000_000_000)
+
+          do {
+            print("🔍 Fetching latest timeline posts to match '\(createdEvent.title)'")
+            let posts = try await apiClient.fetchTimeline(limit: 10)
+
+            // マッチングロジックの強化: タイトルが含まれているか確認
+            if let myPost = posts.first(where: { $0.content.contains(createdEvent.title) }) {
+              print("✅ Found matching timeline post: \(myPost.id)")
+              IconManager.shared.prepareIconGeneration(
+                for: myPost.id, category: createdEvent.category)
+            } else {
+              print(
+                "⚠️ Could not find timeline post containing '\(createdEvent.title)'. Available posts: \(posts.map { $0.content })"
+              )
+            }
+          } catch {
+            print("❌ Failed to fetch timeline for icon generation: \(error)")
+          }
+        }
+      }
     } catch {
       print("Failed to sync create event: \(error)")
     }
@@ -224,25 +257,29 @@ class EventManager: ObservableObject {
   }
 
   // MARK: - Converter
-  private func convertToScheduleEvent(_ ekEvent: EKEvent, isAIGenerated: Bool? = nil)
-    -> ScheduleEvent
-  {
+  private func convertToScheduleEvent(
+    _ ekEvent: EKEvent, isAIGenerated: Bool? = nil, colorHex: String? = nil, category: String? = nil
+  ) -> ScheduleEvent {
     // IDは新規発行 (UUID)
     // 実際にはBackendから返ってきたIDを保存して再利用すべき
 
     // 引数で指定があればそれを優先、なければnotes判定
     let aiFlag = isAIGenerated ?? self.isAIGenerated(ekEvent)
 
+    // カテゴリも引数指定があれば優先、なければカレンダー名
+    let finalCategory = category ?? ekEvent.calendar?.title ?? "Uncategorized"
+
     return ScheduleEvent(
       id: UUID().uuidString.lowercased(),  // 新規ID
       userId: currentUserId,
       title: ekEvent.title ?? "No Title",
-      category: ekEvent.calendar?.title ?? "Uncategorized",
+      category: finalCategory,
       startDate: ekEvent.startDate,
       endDate: ekEvent.endDate,
       isAIGenerated: aiFlag,
       ekEventId: ekEvent.eventIdentifier,
-      createdAt: Date()
+      createdAt: Date(),
+      colorHex: colorHex
     )
   }
 

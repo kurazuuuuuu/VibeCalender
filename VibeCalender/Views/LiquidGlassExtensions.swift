@@ -66,14 +66,18 @@ struct LiquidGlassStyle: ShapeStyle {
 
 extension View {
   /// Base Modifier for Liquid Glass Effect
-  func vibeGlassEffect<S: Shape>(_ theme: LiquidGlassTheme = .standard, in shape: S) -> some View {
+  func vibeGlassEffect<S: Shape>(
+    _ theme: LiquidGlassTheme = .standard, in shape: S, tint: Color? = nil
+  ) -> some View {
     self.background {
       ZStack {
         // 1. Base Material
         shape.fill(.ultraThinMaterial)
 
         // 2. Theme Tint (Subtle Color Layer)
-        if theme != .clear {
+        if let tint = tint {
+          shape.fill(tint)
+        } else if theme != .clear {
           shape.fill(
             LinearGradient(
               colors: theme.gradientColors,
@@ -163,14 +167,18 @@ extension View {
   }
 
   /// Global Alias with specific theme
-  func glassEffect(_ theme: LiquidGlassTheme, cornerRadius: CGFloat = 12) -> some View {
+  func glassEffect(_ theme: LiquidGlassTheme, cornerRadius: CGFloat = 12, fill: Color? = nil)
+    -> some View
+  {
     self.vibeGlassEffect(
-      theme, in: RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
+      theme, in: RoundedRectangle(cornerRadius: cornerRadius, style: .continuous), tint: fill)
   }
 
   /// Global Alias with specific theme and shape
-  func glassEffect<S: Shape>(_ theme: LiquidGlassTheme, in shape: S) -> some View {
-    self.vibeGlassEffect(theme, in: shape)
+  func glassEffect<S: Shape>(_ theme: LiquidGlassTheme, in shape: S, fill: Color? = nil)
+    -> some View
+  {
+    self.vibeGlassEffect(theme, in: shape, tint: fill)
   }
 
   // MARK: - Config API Overloads (Syntax Sugar)
