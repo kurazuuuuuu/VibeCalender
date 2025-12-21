@@ -33,10 +33,8 @@
     * Foundation Model Framework (Local LLM)
 
 ### バックエンド
-* ~~Python~~
-    * ~~FastAPI~~
-* Ruby
-    * Ruby on Rails (API Mode)
+* Python
+    * FastAPI
 
 ### 開発環境
 #### > CloudIDE
