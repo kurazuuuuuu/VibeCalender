@@ -12,53 +12,59 @@ struct MainTabView: View {
   @State private var selectedTab = 0
   @State private var showAddSheet = false
   @State private var showDebugSheet = false
+  @State private var showSideMenu = false
   @EnvironmentObject var appConfig: AppConfig
 
   var body: some View {
-    Group {
-      switch selectedTab {
-      case 0:
-        WeeklyCalendarView()
-      case 1:
-        FeedView()
-      case 2:
-        MemoListView()
-      default:
-        WeeklyCalendarView()
-      }
-    }
-    .frame(maxWidth: .infinity, maxHeight: .infinity)
-    .overlay(alignment: .bottom) {
-      // 下部のブラーグラデーション
-      gradientBackground
-    }
-    .overlay(alignment: .bottom) {
-      // Apple 標準スタイルの浮遊タブバー
-      floatingTabBar
-        .padding(.bottom, 20)
-    }
-    .overlay(alignment: .topLeading) {
-      if appConfig.isDebugMode {
-        Button(action: { showDebugSheet = true }) {
-          Image(systemName: "ladybug.fill")
-            .font(.system(size: 20))
-            .foregroundColor(.white)
-            .padding(12)
-            .background(Color.purple.opacity(0.8))
-            .clipShape(Circle())
-            .shadow(radius: 4)
+    ZStack {
+      Group {
+        switch selectedTab {
+        case 0:
+          WeeklyCalendarView()
+        case 1:
+          FeedView(showSideMenu: $showSideMenu)
+        case 2:
+          MemoListView()
+        default:
+          WeeklyCalendarView()
         }
-        .padding(.leading, 16)
-        .padding(.top, 50)
       }
-    }
-    .preferredColorScheme(.light)
-    .sheet(isPresented: $showAddSheet) {
-      AIDateInputView()
-        .preferredColorScheme(.light)
-    }
-    .sheet(isPresented: $showDebugSheet) {
-      DebugProfileView()
+      .frame(maxWidth: .infinity, maxHeight: .infinity)
+      .overlay(alignment: .bottom) {
+        // 下部のブラーグラデーション
+        gradientBackground
+      }
+      .overlay(alignment: .bottom) {
+        // Apple 標準スタイルの浮遊タブバー
+        floatingTabBar
+          .padding(.bottom, 20)
+      }
+      .overlay(alignment: .topLeading) {
+        if appConfig.isDebugMode {
+          Button(action: { showDebugSheet = true }) {
+            Image(systemName: "ladybug.fill")
+              .font(.system(size: 20))
+              .foregroundColor(.white)
+              .padding(12)
+              .background(Color.purple.opacity(0.8))
+              .clipShape(Circle())
+              .shadow(radius: 4)
+          }
+          .padding(.leading, 16)
+          .padding(.top, 50)
+        }
+      }
+      .preferredColorScheme(.light)
+      .sheet(isPresented: $showAddSheet) {
+        AIDateInputView()
+          .preferredColorScheme(.light)
+      }
+      .sheet(isPresented: $showDebugSheet) {
+        DebugProfileView()
+      }
+
+      // Side Menu Overlay (Top Layer)
+      SideMenuView(isShowing: $showSideMenu)
     }
   }
 
@@ -92,7 +98,7 @@ struct MainTabView: View {
     HStack(spacing: 8) {
       GlassTabButton(
         icon: "calendar",
-        title: "カレンダー",
+        title: "Calendar",
         isSelected: selectedTab == 0
       ) {
         withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
@@ -102,7 +108,7 @@ struct MainTabView: View {
 
       GlassTabButton(
         icon: "clock",
-        title: "フィード",
+        title: "Timeline",
         isSelected: selectedTab == 1
       ) {
         withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
@@ -112,7 +118,7 @@ struct MainTabView: View {
 
       GlassTabButton(
         icon: "note.text",
-        title: "メモ",
+        title: "Memo",
         isSelected: selectedTab == 2
       ) {
         withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
@@ -128,7 +134,7 @@ struct MainTabView: View {
     }
     .padding(.horizontal, 16)
     .padding(.vertical, 10)
-    .glassEffect(.regular, in: Capsule())
+    .glassEffect(.standard, in: Capsule())
     .overlay(
       Capsule()
         .stroke(Color.white.opacity(0.5), lineWidth: 0.5)
@@ -155,6 +161,7 @@ struct MainTabView: View {
     }
     .interactive(true)
   }
+
 }
 
 // MARK: - Liquid Glass タブボタン

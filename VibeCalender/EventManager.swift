@@ -9,10 +9,15 @@ import Combine
 import CoreML
 import EventKit
 import Foundation
+import SwiftUI
 
 @MainActor
 class EventManager: ObservableObject {
   var store = EKEventStore()
+  private let apiClient = APIClient.shared
+
+  // ログインユーザーID（簡易的に保存）
+  @AppStorage("currentUserId") var currentUserId: String = ""
 
   // イベントへの認証ステータスのメッセージ
   @Published var statusMessage = ""
@@ -124,7 +129,24 @@ class EventManager: ObservableObject {
     }
 
     try store.save(event, span: .thisEvent)
+
+    // バックエンド同期
+    Task {
+      await syncCreateEvent(event, isAIGenerated: isAIGenerated)
+    }
+
     return event
+  }
+
+  private func syncCreateEvent(_ ekEvent: EKEvent, isAIGenerated: Bool) async {
+    guard !currentUserId.isEmpty else { return }
+    let scheduleEvent = convertToScheduleEvent(ekEvent, isAIGenerated: isAIGenerated)
+    do {
+      _ = try await apiClient.createEvent(event: scheduleEvent)
+      print("Event synced to backend: \(scheduleEvent.title), isAI: \(isAIGenerated)")
+    } catch {
+      print("Failed to sync create event: \(error)")
+    }
   }
 
   // MARK: - 予定更新
@@ -154,12 +176,74 @@ class EventManager: ObservableObject {
     }
 
     try store.save(event, span: .thisEvent)
+
+    // バックエンド同期
+    Task {
+      await syncUpdateEvent(event)
+    }
+  }
+
+  private func syncUpdateEvent(_ ekEvent: EKEvent) async {
+    guard !currentUserId.isEmpty else { return }
+    // 本来はBackend側のIDが必要だが、ここではEKEventIDを頼りにするか、
+    // またはBackend側でekEventIdを使って検索して更新するAPIが必要。
+    // 今回の簡易実装では、IDが一致するものがあれば...だが、
+    // BackendのID (UUID) と EKEvent.eventIdentifier は異なる。
+    // BackendのIDをどこかに保存しないとUpdate/Deleteは難しい。
+    // 暫定措置: UUIDを生成して送信するが、Updateは「Backendに同じekEventIdがあれば更新」等のロジックがサーバーに必要、
+    // またはLocalでBackendIDを保持する必要がある。
+    // 今回は Createのみ、あるいは、Event作成時にBackendIDをnotesに埋め込むなどのHackが必要。
+    // 時間の都合上、Createと同じconvertToScheduleEventを使うが、
+    // Backend側で "ek_event_id" をキーにUpsertするロジックがないと重複する可能性がある。
+    // *Implementation Plan* ではそこまで詳細化していなかったため、
+    // ここでは「同期を試みる」実装にとどめる。
+    // (実運用ではローカルDBへのマッピングが必要)
+
+    let scheduleEvent = convertToScheduleEvent(ekEvent)
+    // Update API calling ... (Assuming mapped logic exists or just fire and forget for prototype)
+    // Backend IDが不明なため、Updateはスキップするか、検索APIが必要。
+    // ここではスキップ (TODO: Implement ID mapping)
+    print("Sync Update skipped (Missing Backend ID mapping): \(scheduleEvent.title)")
   }
 
   // MARK: - 予定削除
 
   func deleteEvent(_ event: EKEvent) throws {
     try store.remove(event, span: .thisEvent)
+
+    // バックエンド同期
+    Task {
+      await syncDeleteEvent(event)
+    }
+  }
+
+  private func syncDeleteEvent(_ ekEvent: EKEvent) async {
+    guard !currentUserId.isEmpty else { return }
+    // Update同様、Backend IDが不明なためスキップ
+    print("Sync Delete skipped (Missing Backend ID mapping)")
+  }
+
+  // MARK: - Converter
+  private func convertToScheduleEvent(_ ekEvent: EKEvent, isAIGenerated: Bool? = nil)
+    -> ScheduleEvent
+  {
+    // IDは新規発行 (UUID)
+    // 実際にはBackendから返ってきたIDを保存して再利用すべき
+
+    // 引数で指定があればそれを優先、なければnotes判定
+    let aiFlag = isAIGenerated ?? self.isAIGenerated(ekEvent)
+
+    return ScheduleEvent(
+      id: UUID().uuidString.lowercased(),  // 新規ID
+      userId: currentUserId,
+      title: ekEvent.title ?? "No Title",
+      category: ekEvent.calendar?.title ?? "Uncategorized",
+      startDate: ekEvent.startDate,
+      endDate: ekEvent.endDate,
+      isAIGenerated: aiFlag,
+      ekEventId: ekEvent.eventIdentifier,
+      createdAt: Date()
+    )
   }
 
   // MARK: - AI生成判定
@@ -241,7 +325,7 @@ class EventPredictor {
     let features = date.aiFeatures
 
     do {
-      let input = try CalendarClassifierInput(
+      let input = CalendarClassifierInput(
         weekday: features.weekday,
         hour: features.hour,
         month: features.month,

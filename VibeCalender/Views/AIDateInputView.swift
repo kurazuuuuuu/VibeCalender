@@ -38,7 +38,7 @@ struct AIDateInputView: View {
 
             Spacer()
 
-            Text("AI 自動生成")
+            Text("予定を追加")
               .font(.headline)
 
             Spacer()
@@ -51,7 +51,7 @@ struct AIDateInputView: View {
 
           Spacer()
 
-          Text("いつの予定を作りますか？")
+          Text("いつの予定を作りたいですか？")
             .font(.title2)
             .fontWeight(.bold)
 
@@ -60,12 +60,14 @@ struct AIDateInputView: View {
             selection: $selectedDate,
             displayedComponents: [.date]
           )
+
           .datePickerStyle(.graphical)
           .environment(\.locale, Locale(identifier: "ja_JP"))
           .padding()
           .background(
             RoundedRectangle(cornerRadius: 16)
-              .fill(Color(.secondarySystemBackground))
+              .fill(.ultraThinMaterial)
+              .glassEffect(.ai, in: RoundedRectangle(cornerRadius: 16))
           )
           .padding(.horizontal)
 
@@ -75,7 +77,7 @@ struct AIDateInputView: View {
           Button(action: performAIGeneration) {
             HStack {
               Image(systemName: "sparkles")
-              Text("予定を生成する")
+              Text("予定を追加する...？")
             }
             .font(.headline)
             .foregroundStyle(.white)
@@ -83,21 +85,26 @@ struct AIDateInputView: View {
             .padding()
             .background(
               LinearGradient(
-                colors: [.blue, .purple],
+                colors: [.purple, .pink],
                 startPoint: .topLeading,
                 endPoint: .bottomTrailing
               )
             )
             .clipShape(Capsule())
-            .shadow(color: .blue.opacity(0.3), radius: 10, x: 0, y: 5)
+            .shadow(color: .purple.opacity(0.4), radius: 10, x: 0, y: 5)
+            .overlay(
+              Capsule()
+                .stroke(.white.opacity(0.3), lineWidth: 1)
+            )
           }
           .padding(.horizontal)
           .padding(.bottom, 20)
+          .interactive()
         }
         .zIndex(0)
       }
     }
-    .alert("AI エラー", isPresented: $showError) {
+    .alert("勝手に予定を追加できません...", isPresented: $showError) {
       Button("OK", role: .cancel) {}
     } message: {
       Text(errorMessage)
@@ -117,8 +124,8 @@ struct AIDateInputView: View {
       // 1. 最新データの取得
       let allEvents = eventManager.store.events(
         matching: eventManager.store.predicateForEvents(
-          withStart: Date().addingTimeInterval(-365 * 24 * 3600),  // 過去1年
-          end: Date(),
+          withStart: Date().addingTimeInterval(-180 * 24 * 3600),  // 過去半年
+          end: Date().addingTimeInterval(180 * 24 * 3600),  // 未来半年
           calendars: nil
         )
       )
@@ -143,12 +150,12 @@ struct AIDateInputView: View {
     // Hybrid Generation: Core ML + User Profile (LLM)
     guard let generatedEvent = await AICalendarGenerator.shared.generateEvent(for: selectedDate)
     else {
-      handleError("AIが応答できませんでした。")
+      handleError("勝手に予定を追加できませんでした...")
       return
     }
 
     withAnimation {
-      loadingMessage = "ひらめきました: \(generatedEvent.title)"
+      loadingMessage = "勝手に予定を思いつきました...ッ！: \(generatedEvent.title)"
     }
 
     // 日付 (Year/Month/Day) を selectedDate から、時間 (Hour/Minute) を GeneratedEvent から取得して結合

@@ -78,7 +78,7 @@ class UserPreferenceEncoder {
     var categoryDistribution: [String: Int] = [:]
     var keywords: [String: Int] = [:]
     var totalDuration: Int = 0
-    var freeSlots: Set<String> = []
+    let freeSlots: Set<String> = []
 
     let weekdays = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]
     let calendar = Calendar.current

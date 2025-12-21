@@ -124,7 +124,7 @@ class AICalendarGenerator {
         .replacingOccurrences(of: "```json", with: "")
         .replacingOccurrences(of: "```", with: "")
 
-      guard let data = jsonString.data(using: .utf8) else { return nil }
+      guard let data = jsonString.data(using: .utf8) else { throw URLError(.badServerResponse) }
       let llmEvent = try JSONDecoder().decode(LLMEventResponse.self, from: data)
 
       return GeneratedEvent(
@@ -137,8 +137,56 @@ class AICalendarGenerator {
         endMinute: llmEvent.endMinute
       )
     } catch {
-      print("Foundation Model Generation Error: \(error)")
-      return nil
+      print("Foundation Model Generation Error: \(error). Falling back to rule-based generation.")
+      return generateFallbackEvent(for: date, category: predictedCategory)
     }
+  }
+
+  /// ルールベースの簡易生成 (LLMが利用できない場合)
+  private func generateFallbackEvent(for date: Date, category: String) -> GeneratedEvent {
+    let hour = Calendar.current.component(.hour, from: date)
+    let isWeekend = Calendar.current.isDateInWeekend(date)
+
+    // 時間帯と曜日による簡易分岐
+    let title: String
+    let description: String
+    let durationHours: Int
+
+    if isWeekend {
+      if hour < 12 {
+        title = "カフェでリラックス"
+        description = "近所のカフェでゆっくりコーヒーを飲みながら、一週間の疲れを癒す。"
+        durationHours = 2
+      } else if hour < 18 {
+        title = "ショッピング"
+        description = "気になっていたお店を巡って、新しいアイテムを探す。"
+        durationHours = 3
+      } else {
+        title = "映画鑑賞"
+        description = "自宅で気になっていた映画を観て過ごす。"
+        durationHours = 2
+      }
+    } else {
+      // 平日
+      if hour >= 18 {
+        title = "ジムでトレーニング"
+        description = "仕事終わりに軽く汗を流してリフレッシュする。"
+        durationHours = 1
+      } else {
+        title = "集中作業"
+        description = "カフェや図書館で集中してタスクを片付ける。"
+        durationHours = 2
+      }
+    }
+
+    return GeneratedEvent(
+      title: title,
+      category: category,
+      notes: "\(description) (Auto-generated fallback)",
+      startHour: hour,
+      startMinute: 0,
+      endHour: hour + durationHours,
+      endMinute: 0
+    )
   }
 }
