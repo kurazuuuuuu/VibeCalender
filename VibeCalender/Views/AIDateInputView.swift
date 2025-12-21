@@ -198,7 +198,9 @@ struct AIDateInputView: View {
         startDate: newStartDate,
         endDate: newEndDate,
         notes: generatedEvent.notes,
-        isAIGenerated: true
+        isAIGenerated: true,
+        colorHex: generatedEvent.colorHex,
+        category: generatedEvent.category
       )
 
       // 完了待ち演出

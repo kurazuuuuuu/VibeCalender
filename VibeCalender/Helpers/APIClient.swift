@@ -48,6 +48,10 @@ class APIClient {
     AuthManager.shared.getAuthToken()
   }
 
+  private var hostBaseURL: String {
+    baseURL.replacingOccurrences(of: "/v1", with: "")
+  }
+
   // MARK: - Generic Request Handler
 
   private func request<T: Decodable>(
@@ -77,7 +81,7 @@ class APIClient {
 
     if let body = body {
       do {
-        request.httpBody = try JSONEncoder().encode(body)
+        request.httpBody = try createEncoder().encode(body)
       } catch {
         throw APIError.encodingError
       }
@@ -112,48 +116,12 @@ class APIClient {
     }
 
     do {
-      // Void対応 (204 No Contentなど)
+      // Void対応
       if T.self == EmptyResponse.self {
-        // 無理やり空のJSONとしてパースさせるか、呼び出し側でGenericsを工夫する必要があるが、
-        // ここでは簡易的に空オブジェクトを返す
-        // Hack: EmptyResponse struct must be Decodable
         return try JSONDecoder().decode(T.self, from: "{}".data(using: .utf8)!)
       }
 
-      let decoder = JSONDecoder()
-      decoder.dateDecodingStrategy = .custom { decoder in
-        let container = try decoder.singleValueContainer()
-        let dateString = try container.decode(String.self)
-
-        // 1. Try ISO8601 with Fractional Seconds (standard)
-        let isoFormatter = ISO8601DateFormatter()
-        isoFormatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
-        if let date = isoFormatter.date(from: dateString) { return date }
-
-        // 2. Try ISO8601 without Fractional Seconds
-        isoFormatter.formatOptions = [.withInternetDateTime]
-        if let date = isoFormatter.date(from: dateString) { return date }
-
-        // 3. Fallback for Python/FastAPI microseconds (e.g., 6 digits)
-        let formatter = DateFormatter()
-        formatter.calendar = Calendar(identifier: .iso8601)
-        formatter.locale = Locale(identifier: "en_US_POSIX")
-        formatter.timeZone = TimeZone(secondsFromGMT: 0)
-
-        // With timezone
-        formatter.dateFormat = "yyyy-MM-dd'T'HH:mm:ss.SSSSSSXXXXX"
-        if let date = formatter.date(from: dateString) { return date }
-
-        // Without timezone (naive)
-        formatter.dateFormat = "yyyy-MM-dd'T'HH:mm:ss.SSSSSS"
-        if let date = formatter.date(from: dateString) { return date }
-
-        throw DecodingError.dataCorruptedError(
-          in: container,
-          debugDescription: "Expected date string to be ISO8601-formatted. Got: \(dateString)")
-      }
-
-      return try decoder.decode(T.self, from: data)
+      return try createDecoder().decode(T.self, from: data)
     } catch {
       print("Decoding error: \(error)")
       throw APIError.decodingError
@@ -178,7 +146,13 @@ extension APIClient {
     urlRequest.httpMethod = "POST"
     urlRequest.setValue("application/x-www-form-urlencoded", forHTTPHeaderField: "Content-Type")
 
-    let bodyString = "username=\(request.email)&password=\(request.password)"
+    let emailEncoded =
+      request.email.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? request.email
+    let passwordEncoded =
+      request.password.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed)
+      ?? request.password
+
+    let bodyString = "username=\(emailEncoded)&password=\(passwordEncoded)"
     urlRequest.httpBody = bodyString.data(using: .utf8)
 
     let (data, response) = try await URLSession.shared.data(for: urlRequest)
@@ -227,38 +201,7 @@ extension APIClient {
       throw APIError.invalidResponse
     }
 
-    let decoder = JSONDecoder()
-    decoder.dateDecodingStrategy = .custom { decoder in
-      let container = try decoder.singleValueContainer()
-      let dateString = try container.decode(String.self)
-
-      // 1. Try ISO8601 with Fractional Seconds (standard)
-      let isoFormatter = ISO8601DateFormatter()
-      isoFormatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
-      if let date = isoFormatter.date(from: dateString) { return date }
-
-      // 2. Try ISO8601 without Fractional Seconds
-      isoFormatter.formatOptions = [.withInternetDateTime]
-      if let date = isoFormatter.date(from: dateString) { return date }
-
-      // 3. Fallback for Manual
-      let formatter = DateFormatter()
-      formatter.calendar = Calendar(identifier: .iso8601)
-      formatter.locale = Locale(identifier: "en_US_POSIX")
-      formatter.timeZone = TimeZone(secondsFromGMT: 0)
-
-      formatter.dateFormat = "yyyy-MM-dd'T'HH:mm:ss.SSSSSSXXXXX"
-      if let date = formatter.date(from: dateString) { return date }
-
-      formatter.dateFormat = "yyyy-MM-dd'T'HH:mm:ss.SSSSSS"
-      if let date = formatter.date(from: dateString) { return date }
-
-      throw DecodingError.dataCorruptedError(
-        in: container,
-        debugDescription: "Expected date string to be ISO8601-formatted. Got: \(dateString)")
-    }
-
-    let user = try decoder.decode(User.self, from: userData)
+    let user = try createDecoder().decode(User.self, from: userData)
 
     // AuthManagerに保存と状態更新を依頼
     AuthManager.shared.setAuthenticated(token: tokenResponse.access_token, userId: user.id)
@@ -326,16 +269,25 @@ extension APIClient {
 
     // Map to TimelineFeedItem
     return responses.map { res in
-      TimelineFeedItem(
+      let iconUrl: String? = {
+        guard let relativePath = res.post.icon_url else { return nil }
+        if relativePath.hasPrefix("http") { return relativePath }
+        return "\(hostBaseURL)\(relativePath)"
+      }()
+
+      return TimelineFeedItem(
         id: res.post.id,
         authorName: res.user.username,
-        authorID: "@" + String(res.user.id.prefix(8)),  // Shorten ID for display
+        authorID: "@" + String(res.user.id.prefix(8)),
         content: res.post.content,
         timestamp: parseDate(res.post.created_at) ?? Date(),
         likes: res.likes,
-        replies: 0,  // Not implemented yet
-        category: .daily,  // Default for now
-        selectedReaction: res.my_reaction.flatMap { ReactionType(rawValue: $0) }
+        replies: 0,
+        category: res.post.category ?? "日常",
+        selectedReaction: res.my_reaction.flatMap { ReactionType(rawValue: $0) },
+        iconUrl: iconUrl,
+        eventDate: res.post.event_date,
+        colorHex: res.post.color_hex
       )
     }
   }
@@ -363,33 +315,104 @@ extension APIClient {
     let _: EmptyResponse = try await request(endpoint: "/timeline/posts/\(id)", method: "DELETE")
   }
 
+  func uploadIcon(postID: String, image: Data) async throws -> String {
+    guard let url = URL(string: "\(baseURL)/timeline/posts/\(postID)/icon") else {
+      throw APIError.invalidURL
+    }
+
+    var request = URLRequest(url: url)
+    request.httpMethod = "POST"
+
+    if let token = authToken {
+      request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+    }
+
+    let boundary = "Boundary-\(UUID().uuidString)"
+    request.setValue(
+      "multipart/form-data; boundary=\(boundary)", forHTTPHeaderField: "Content-Type")
+
+    var body = Data()
+    body.append("--\(boundary)\r\n".data(using: .utf8)!)
+    body.append(
+      "Content-Disposition: form-data; name=\"file\"; filename=\"icon.jpg\"\r\n".data(using: .utf8)!
+    )
+    body.append("Content-Type: image/jpeg\r\n\r\n".data(using: .utf8)!)
+    body.append(image)
+    body.append("\r\n--\(boundary)--\r\n".data(using: .utf8)!)
+
+    request.httpBody = body
+
+    let (data, response) = try await URLSession.shared.data(for: request)
+
+    guard let httpResponse = response as? HTTPURLResponse,
+      (200...299).contains(httpResponse.statusCode)
+    else {
+      throw APIError.invalidResponse
+    }
+
+    struct UploadResponse: Decodable {
+      let icon_url: String
+    }
+
+    let result = try JSONDecoder().decode(UploadResponse.self, from: data)
+    return result.icon_url
+  }
+
   // Helpers
+  private func createEncoder() -> JSONEncoder {
+    let encoder = JSONEncoder()
+    let formatter = DateFormatter()
+    formatter.calendar = Calendar(identifier: .iso8601)
+    formatter.locale = Locale(identifier: "en_US_POSIX")
+    formatter.timeZone = TimeZone(secondsFromGMT: 0)
+    formatter.dateFormat = "yyyy-MM-dd'T'HH:mm:ss.SSSSSS"
+    encoder.dateEncodingStrategy = .formatted(formatter)
+    return encoder
+  }
+
+  private func createDecoder() -> JSONDecoder {
+    let decoder = JSONDecoder()
+    decoder.dateDecodingStrategy = .custom { decoder in
+      let container = try decoder.singleValueContainer()
+      let dateString = try container.decode(String.self)
+      if let date = self.parseDate(dateString) {
+        return date
+      }
+      throw DecodingError.dataCorruptedError(
+        in: container,
+        debugDescription: "Expected date string to be ISO8601-formatted. Got: \(dateString)")
+    }
+    return decoder
+  }
+
   private func parseDate(_ dateString: String) -> Date? {
-    // 1. Try ISO8601 with Fractional Seconds
+    // 1. Try ISO8601 (with fractional seconds)
     let isoFormatter = ISO8601DateFormatter()
     isoFormatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
     if let date = isoFormatter.date(from: dateString) { return date }
 
-    // 2. Try ISO8601 without Fractional Seconds
+    // 2. Try ISO8601 (without fractional seconds)
     isoFormatter.formatOptions = [.withInternetDateTime]
     if let date = isoFormatter.date(from: dateString) { return date }
 
-    // 3. Fallback for manual formats
+    // 3. Fallback for naive or microsecond formats
     let formatter = DateFormatter()
     formatter.calendar = Calendar(identifier: .iso8601)
     formatter.locale = Locale(identifier: "en_US_POSIX")
     formatter.timeZone = TimeZone(secondsFromGMT: 0)
 
-    formatter.dateFormat = "yyyy-MM-dd'T'HH:mm:ss.SSSSSSXXXXX"
-    if let date = formatter.date(from: dateString) { return date }
+    let formats = [
+      "yyyy-MM-dd'T'HH:mm:ss.SSSSSSXXXXX",
+      "yyyy-MM-dd'T'HH:mm:ss.SSSSSS",
+      "yyyy-MM-dd'T'HH:mm:ss",
+    ]
 
-    formatter.dateFormat = "yyyy-MM-dd'T'HH:mm:ss.SSSSSS"
-    return formatter.date(from: dateString)
-  }
+    for format in formats {
+      formatter.dateFormat = format
+      if let date = formatter.date(from: dateString) { return date }
+    }
 
-  // parseDateFallback is no longer needed as parseDate is robust
-  private func parseDateFallback(_ dateString: String) -> Date? {
-    return parseDate(dateString)
+    return nil
   }
 }
 
@@ -399,6 +422,10 @@ struct TimelineFeedResponse: Decodable {
     let id: String
     let content: String
     let created_at: String
+    let icon_url: String?
+    let event_date: String?
+    let color_hex: String?
+    let category: String?
   }
   struct User: Decodable {
     let id: String
