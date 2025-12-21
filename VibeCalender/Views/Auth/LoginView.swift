@@ -8,26 +8,67 @@
 import SwiftUI
 
 struct LoginView: View {
+  @Namespace private var namespace
   @Environment(\.dismiss) var dismiss
+  @State private var isRegisterMode = false
+  @State private var username = ""
   @State private var email = ""
   @State private var password = ""
   @State private var errorMessage = ""
   @State private var isLoading = false
 
+  init(isRegisterMode: Bool = false) {
+    _isRegisterMode = State(initialValue: isRegisterMode)
+  }
+
   var body: some View {
     VStack(spacing: 20) {
       Spacer()
+      HStack(spacing: 10) {
+        Image(systemName: isRegisterMode ? "person.badge.plus" : "lock.iphone")
+          .resizable()
+          .scaledToFit()
+          .frame(width: 45, height: 45)
+          .foregroundColor(.blue)
+          .contentTransition(.symbolEffect(.replace))
+      }
+      .padding(.bottom, 10)
+
+      if isRegisterMode {
+        TextField("ユーザー名", text: $username)
+          .textFieldStyle(PlainTextFieldStyle())
+          .padding()
+          .autocapitalization(.none)
+          .background(Color.primary.opacity(0.05))
+          .cornerRadius(16)
+          .overlay(
+            RoundedRectangle(cornerRadius: 16)
+              .stroke(Color.white.opacity(0.2), lineWidth: 0.5)
+          )
+          .transition(.move(edge: .top).combined(with: .opacity))
+      }
+
       TextField("メールアドレス", text: $email)
         .textFieldStyle(PlainTextFieldStyle())
         .padding()
         .keyboardType(.emailAddress)
         .autocapitalization(.none)
-        .glassEffect(.clear, cornerRadius: 16)
+        .background(Color.primary.opacity(0.05))
+        .cornerRadius(16)
+        .overlay(
+          RoundedRectangle(cornerRadius: 16)
+            .stroke(Color.white.opacity(0.2), lineWidth: 0.5)
+        )
 
       SecureField("パスワード", text: $password)
         .textFieldStyle(PlainTextFieldStyle())
         .padding()
-        .glassEffect(.clear, cornerRadius: 16)
+        .background(Color.primary.opacity(0.05))
+        .cornerRadius(16)
+        .overlay(
+          RoundedRectangle(cornerRadius: 16)
+            .stroke(Color.white.opacity(0.2), lineWidth: 0.5)
+        )
 
       if !errorMessage.isEmpty {
         Text(errorMessage)
@@ -36,32 +77,69 @@ struct LoginView: View {
           .padding(.horizontal)
       }
 
-      Button(action: performLogin) {
-        if isLoading {
-          ProgressView()
-            .tint(.white)
-        } else {
-          Text("ログイン")
-            .bold()
-            .frame(maxWidth: .infinity)
-            .padding()
+      GlassEffectContainer {
+        HStack {
+          // Login Button
+          Button(action: {
+            if isRegisterMode {
+              withAnimation(.spring()) { isRegisterMode = false }
+            } else {
+              performLogin()
+            }
+          }) {
+            if isLoading && !isRegisterMode {
+              ProgressView().tint(.white)
+            } else {
+              Text("ログイン")
+                .bold()
+                .frame(maxWidth: .infinity)
+                .padding()
+            }
+          }
+          .background {
+            if !isRegisterMode {
+              Capsule()
+                .fill(Color.blue.opacity(0.8))
+                .matchedGeometryEffect(id: "activeBackground", in: namespace)
+            }
+          }
+          .foregroundStyle(!isRegisterMode ? .white : .primary)
+          .glassEffect()
+          // .glassEffectUnion(id: 1, namespace: namespace) // Simplified for clarity
+
+          // Sign Up Button
+          Button(action: {
+            if !isRegisterMode {
+              withAnimation(.spring()) { isRegisterMode = true }
+            } else {
+              performRegister()
+            }
+          }) {
+            if isLoading && isRegisterMode {
+              ProgressView().tint(.white)
+            } else {
+              Text("サインアップ")
+                .bold()
+                .frame(maxWidth: .infinity)
+                .padding()
+            }
+          }
+          .background {
+            if isRegisterMode {
+              Capsule()
+                .fill(Color.blue.opacity(0.8))
+                .matchedGeometryEffect(id: "activeBackground", in: namespace)
+            }
+          }
+          .foregroundStyle(isRegisterMode ? .white : .primary)
+          .glassEffect()
+          // .glassEffectUnion(id: 1, namespace: namespace) // Simplified
         }
       }
-      .foregroundColor(Color.blue)
-      .glassEffect(SwiftUI.Glass.regular, in: Capsule())
-      .shadow(color: .blue.opacity(0.3), radius: 10, x: 0, y: 5)
-      .disabled(email.isEmpty || password.isEmpty || isLoading)
-      .interactive()
+      .disabled(isLoading)
 
       Spacer()
     }
-    .padding()
-    .background(
-      RoundedRectangle(cornerRadius: 24, style: .continuous)
-        .fill(.ultraThinMaterial)
-        .glassEffect(SwiftUI.Glass.clear, in: RoundedRectangle(cornerRadius: 24, style: .continuous))
-        .shadow(color: Color.black.opacity(0.1), radius: 30, x: 0, y: 15)
-    )
     .padding()
     .background(
       // 同じグラデーションを適用して統一感を出す（NavigationStackの背景が透過されない場合用）
@@ -110,6 +188,28 @@ struct LoginView: View {
           } else {
             errorMessage = "Unknown error: \(error.localizedDescription)"
           }
+        }
+      }
+    }
+  }
+
+  private func performRegister() {
+    isLoading = true
+    errorMessage = ""
+
+    Task {
+      do {
+        let request = RegisterRequest(username: username, email: email, password: password)
+        let response = try await APIClient.shared.register(request: request)
+
+        await MainActor.run {
+          UserDefaults.standard.set(response.user.id, forKey: "currentUserId")
+          isLoading = false
+        }
+      } catch {
+        await MainActor.run {
+          isLoading = false
+          errorMessage = "Registration failed: \(error.localizedDescription)"
         }
       }
     }

@@ -112,11 +112,8 @@ struct PostRowView: View {
       }
     }
     .padding(16)
-    // Apply Liquid Glass Effect with "Refreshing" Tint
-    .vibeGlassEffect(
-      .vibeGlassEffectStyle(tint: post.category.color.opacity(0.1)),
-      in: RoundedRectangle(cornerRadius: 24, style: .continuous)
-    )
+    // Apply Liquid Glass Effect
+    .glassEffect(.standard, in: RoundedRectangle(cornerRadius: 24, style: .continuous))
     .shadow(color: Color.black.opacity(0.05), radius: 10, x: 0, y: 5)
     .padding(.horizontal, 4)  // Add side padding to float inside the screen
   }

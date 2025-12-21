@@ -60,12 +60,14 @@ struct AIDateInputView: View {
             selection: $selectedDate,
             displayedComponents: [.date]
           )
+
           .datePickerStyle(.graphical)
           .environment(\.locale, Locale(identifier: "ja_JP"))
           .padding()
           .background(
             RoundedRectangle(cornerRadius: 16)
-              .fill(Color(.secondarySystemBackground))
+              .fill(.ultraThinMaterial)
+              .glassEffect(.ai, in: RoundedRectangle(cornerRadius: 16))
           )
           .padding(.horizontal)
 
@@ -83,16 +85,21 @@ struct AIDateInputView: View {
             .padding()
             .background(
               LinearGradient(
-                colors: [.blue, .purple],
+                colors: [.purple, .pink],
                 startPoint: .topLeading,
                 endPoint: .bottomTrailing
               )
             )
             .clipShape(Capsule())
-            .shadow(color: .blue.opacity(0.3), radius: 10, x: 0, y: 5)
+            .shadow(color: .purple.opacity(0.4), radius: 10, x: 0, y: 5)
+            .overlay(
+              Capsule()
+                .stroke(.white.opacity(0.3), lineWidth: 1)
+            )
           }
           .padding(.horizontal)
           .padding(.bottom, 20)
+          .interactive()
         }
         .zIndex(0)
       }
@@ -117,8 +124,8 @@ struct AIDateInputView: View {
       // 1. 最新データの取得
       let allEvents = eventManager.store.events(
         matching: eventManager.store.predicateForEvents(
-          withStart: Date().addingTimeInterval(-365 * 24 * 3600),  // 過去1年
-          end: Date(),
+          withStart: Date().addingTimeInterval(-180 * 24 * 3600),  // 過去半年
+          end: Date().addingTimeInterval(180 * 24 * 3600),  // 未来半年
           calendars: nil
         )
       )

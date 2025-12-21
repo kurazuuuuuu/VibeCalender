@@ -98,7 +98,7 @@ struct MainTabView: View {
     HStack(spacing: 8) {
       GlassTabButton(
         icon: "calendar",
-        title: "カレンダー",
+        title: "Calendar",
         isSelected: selectedTab == 0
       ) {
         withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
@@ -108,7 +108,7 @@ struct MainTabView: View {
 
       GlassTabButton(
         icon: "clock",
-        title: "フィード",
+        title: "Timeline",
         isSelected: selectedTab == 1
       ) {
         withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
@@ -118,7 +118,7 @@ struct MainTabView: View {
 
       GlassTabButton(
         icon: "note.text",
-        title: "メモ",
+        title: "Memo",
         isSelected: selectedTab == 2
       ) {
         withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
@@ -134,7 +134,7 @@ struct MainTabView: View {
     }
     .padding(.horizontal, 16)
     .padding(.vertical, 10)
-    .glassEffect(SwiftUI.Glass.regular, in: Capsule())
+    .glassEffect(.standard, in: Capsule())
     .overlay(
       Capsule()
         .stroke(Color.white.opacity(0.5), lineWidth: 0.5)

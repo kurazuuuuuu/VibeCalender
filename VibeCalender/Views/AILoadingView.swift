@@ -24,7 +24,7 @@ struct AILoadingView: View {
           Circle()
             .fill(
               LinearGradient(
-                colors: [.blue.opacity(0.3), .purple.opacity(0.3)],
+                colors: [.purple.opacity(0.3), .pink.opacity(0.3)],
                 startPoint: .topLeading,
                 endPoint: .bottomTrailing
               )
@@ -40,13 +40,13 @@ struct AILoadingView: View {
           Circle()
             .fill(
               LinearGradient(
-                colors: [.cyan.opacity(0.4), .blue.opacity(0.4)],
+                colors: [.purple.opacity(0.2), .orange.opacity(0.3)],
                 startPoint: .bottomLeading,
                 endPoint: .topTrailing
               )
             )
             .frame(width: 80, height: 80)
-            .blur(radius: 10)
+            .blur(radius: 20)
             .rotationEffect(.degrees(isAnimating ? 360 : 0))
             .animation(
               .linear(duration: 8).repeatForever(autoreverses: false),
@@ -56,7 +56,7 @@ struct AILoadingView: View {
           Image(systemName: "sparkles")
             .font(.system(size: 40))
             .foregroundStyle(.white)
-            .shadow(color: .blue.opacity(0.5), radius: 10, x: 0, y: 0)
+            .shadow(color: .purple.opacity(0.6), radius: 5, x: 0, y: 0)
             .opacity(isAnimating ? 1.0 : 0.5)
             .animation(
               .easeInOut(duration: 1).repeatForever(autoreverses: true),
@@ -78,5 +78,5 @@ struct AILoadingView: View {
 }
 
 #Preview {
-  AILoadingView(message: "Vibe を分析中...")
+  AILoadingView(message: "Generating...")
 }

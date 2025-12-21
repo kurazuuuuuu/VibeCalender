@@ -22,19 +22,34 @@ struct SignUpView: View {
         .textFieldStyle(PlainTextFieldStyle())
         .padding()
         .autocapitalization(.none)
-        .glassEffect(.clear, cornerRadius: 16)
+        .background(Color.primary.opacity(0.05))
+        .cornerRadius(16)
+        .overlay(
+          RoundedRectangle(cornerRadius: 16)
+            .stroke(Color.white.opacity(0.2), lineWidth: 0.5)
+        )
 
       TextField("メールアドレス", text: $email)
         .textFieldStyle(PlainTextFieldStyle())
         .padding()
         .keyboardType(.emailAddress)
         .autocapitalization(.none)
-        .glassEffect(.clear, cornerRadius: 16)
+        .background(Color.primary.opacity(0.05))
+        .cornerRadius(16)
+        .overlay(
+          RoundedRectangle(cornerRadius: 16)
+            .stroke(Color.white.opacity(0.2), lineWidth: 0.5)
+        )
 
       SecureField("パスワード", text: $password)
         .textFieldStyle(PlainTextFieldStyle())
         .padding()
-        .glassEffect(.clear, cornerRadius: 16)
+        .background(Color.primary.opacity(0.05))
+        .cornerRadius(16)
+        .overlay(
+          RoundedRectangle(cornerRadius: 16)
+            .stroke(Color.white.opacity(0.2), lineWidth: 0.5)
+        )
 
       if !errorMessage.isEmpty {
         Text(errorMessage)
@@ -54,9 +69,20 @@ struct SignUpView: View {
             .padding()
         }
       }
-      .foregroundColor(Color.blue)
-      .glassEffect(SwiftUI.Glass.regular, in: Capsule())
+      .foregroundStyle(.white)
+      .background(
+        LinearGradient(
+          colors: [.blue, .cyan],
+          startPoint: .topLeading,
+          endPoint: .bottomTrailing
+        )
+      )
+      .clipShape(Capsule())
       .shadow(color: .blue.opacity(0.3), radius: 10, x: 0, y: 5)
+      .overlay(
+        Capsule()
+          .stroke(Color.white.opacity(0.3), lineWidth: 1)
+      )
       .disabled(username.isEmpty || email.isEmpty || password.isEmpty || isLoading)
       .interactive()
 
@@ -66,7 +92,7 @@ struct SignUpView: View {
     .background(
       RoundedRectangle(cornerRadius: 24, style: .continuous)
         .fill(.ultraThinMaterial)
-        .glassEffect(SwiftUI.Glass.clear, in: RoundedRectangle(cornerRadius: 24, style: .continuous))
+        .glassEffect(.standard, in: RoundedRectangle(cornerRadius: 24, style: .continuous))
         .shadow(color: Color.black.opacity(0.1), radius: 30, x: 0, y: 15)
     )
     .padding()
