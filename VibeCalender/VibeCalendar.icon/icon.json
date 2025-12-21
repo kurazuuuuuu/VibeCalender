@@ -6,13 +6,15 @@
     {
       "layers" : [
         {
-          "image-name" : "VibeCalendar_icon_svg 5.svg",
-          "name" : "VibeCalendar_icon_svg 5",
+          "blend-mode" : "normal",
+          "fill" : "automatic",
+          "image-name" : "VibeCalender-Pippi.png",
+          "name" : "VibeCalender-Pippi",
           "position" : {
-            "scale" : 1,
+            "scale" : 0.6,
             "translation-in-points" : [
-              -46.960000000000036,
-              53.799999999999955
+              -41.40619796994679,
+              51.11917785088349
             ]
           }
         }
