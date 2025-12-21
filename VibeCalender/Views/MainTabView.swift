@@ -98,7 +98,7 @@ struct MainTabView: View {
     HStack(spacing: 8) {
       GlassTabButton(
         icon: "calendar",
-        title: "カレンダー",
+        title: "Calendar",
         isSelected: selectedTab == 0
       ) {
         withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
@@ -108,7 +108,7 @@ struct MainTabView: View {
 
       GlassTabButton(
         icon: "clock",
-        title: "フィード",
+        title: "Timeline",
         isSelected: selectedTab == 1
       ) {
         withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
@@ -118,7 +118,7 @@ struct MainTabView: View {
 
       GlassTabButton(
         icon: "note.text",
-        title: "メモ",
+        title: "Memo",
         isSelected: selectedTab == 2
       ) {
         withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {

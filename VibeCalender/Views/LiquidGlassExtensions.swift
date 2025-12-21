@@ -134,16 +134,59 @@ struct LiquidGlassButtonStyle: ButtonStyle {
 
 // MARK: - Compatibility Aliases & Helpers
 
+/// Configuration wrapper for chainable syntax
+struct LiquidGlassConfig {
+  let theme: LiquidGlassTheme
+  let isInteractive: Bool
+}
+
+extension LiquidGlassTheme {
+  var interactive: LiquidGlassConfig {
+    LiquidGlassConfig(theme: self, isInteractive: true)
+  }
+}
+
+// Allow dot syntax .standard.interactive to work when context is LiquidGlassConfig
+extension LiquidGlassConfig {
+  static var standard: LiquidGlassTheme { .standard }
+  static var ai: LiquidGlassTheme { .ai }
+  static var clear: LiquidGlassTheme { .clear }
+}
+
 extension View {
-  /// Global Alias for standard use
-  func glassEffect<S: Shape>(_ theme: LiquidGlassTheme = .standard, in shape: S) -> some View {
+
+  // MARK: - Legacy / Standard API Overloads
+
+  /// Global Alias for standard use (Default)
+  func glassEffect() -> some View {
+    self.vibeGlassEffect(.standard, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+  }
+
+  /// Global Alias with specific theme
+  func glassEffect(_ theme: LiquidGlassTheme, cornerRadius: CGFloat = 12) -> some View {
+    self.vibeGlassEffect(
+      theme, in: RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
+  }
+
+  /// Global Alias with specific theme and shape
+  func glassEffect<S: Shape>(_ theme: LiquidGlassTheme, in shape: S) -> some View {
     self.vibeGlassEffect(theme, in: shape)
   }
 
-  /// Convenience overload (defaults to Standard theme, RoundedRectangle)
-  func glassEffect(_ theme: LiquidGlassTheme = .standard, cornerRadius: CGFloat = 12) -> some View {
+  // MARK: - Config API Overloads (Syntax Sugar)
+
+  /// Logic: .glassEffect(.standard.interactive)
+  func glassEffect(_ config: LiquidGlassConfig, cornerRadius: CGFloat = 12) -> some View {
     self.vibeGlassEffect(
-      theme, in: RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
+      config.theme, in: RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
+    )
+    .interactive(config.isInteractive)
+  }
+
+  /// Logic: .glassEffect(.standard.interactive, in: Capsule())
+  func glassEffect<S: Shape>(_ config: LiquidGlassConfig, in shape: S) -> some View {
+    self.vibeGlassEffect(config.theme, in: shape)
+      .interactive(config.isInteractive)
   }
 }
 
@@ -151,4 +194,29 @@ extension View {
 // However, it is recommended to migrate to .standard / .ai / .clear cases.
 extension LiquidGlassTheme {
   static var regular: LiquidGlassTheme { .standard }
+}
+
+// MARK: - Experimental Components
+
+struct GlassEffectContainer<Content: View>: View {
+  let content: Content
+
+  init(@ViewBuilder content: () -> Content) {
+    self.content = content()
+  }
+
+  var body: some View {
+    content
+      .padding(4)
+      .background(.ultraThinMaterial)
+      .clipShape(Capsule())
+      .shadow(color: .black.opacity(0.1), radius: 5, x: 0, y: 2)
+  }
+}
+
+extension View {
+  func glassEffectUnion(id: Int, namespace: Namespace.ID) -> some View {
+    // Placeholder: Future implementation for matched geometry or union effect
+    self
+  }
 }

@@ -24,7 +24,7 @@ struct FeedView: View {
               ProgressView()
                 .padding(.top, 50)
             } else if items.isEmpty {
-              Text("No posts yet.")
+              Text("Nothing.")
                 .foregroundStyle(.secondary)
                 .padding(.top, 50)
             }

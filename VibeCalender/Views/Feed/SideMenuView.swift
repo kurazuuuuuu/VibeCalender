@@ -30,16 +30,10 @@ struct SideMenuView: View {
           VStack(alignment: .leading, spacing: 32) {
             // Header
             HStack {
-              Image(systemName: "sparkles")
+              Image(systemName: "calendar")
                 .font(.largeTitle)
-                .foregroundStyle(
-                  LinearGradient(
-                    colors: [.blue, .purple],
-                    startPoint: .topLeading,
-                    endPoint: .bottomTrailing
-                  )
-                )
-              Text("Vibe Menu")
+                .foregroundStyle(Color.blue)
+              Text("身勝手カレンダー")
                 .font(.title)
                 .fontWeight(.bold)
                 .foregroundStyle(.primary)
@@ -50,15 +44,15 @@ struct SideMenuView: View {
               .background(Color.white.opacity(0.5))
 
             // Menu Items
-            VStack(alignment: .leading, spacing: 24) {
-              MenuRow(icon: "person.circle", text: "プロフィール") {
-                // Future implementation
-              }
+            // VStack(alignment: .leading, spacing: 24) {
+            //   MenuRow(icon: "person.circle", text: "プロフィール") {
+            //     // Future implementation
+            //   }
 
-              MenuRow(icon: "gearshape", text: "設定") {
-                // Future implementation
-              }
-            }
+            //   MenuRow(icon: "gearshape", text: "設定") {
+            //     // Future implementation
+            //   }
+            // }
 
             Spacer()
 
@@ -75,10 +69,11 @@ struct SideMenuView: View {
               .padding()
               .frame(maxWidth: .infinity, alignment: .leading)
               .background(
-                RoundedRectangle(cornerRadius: 12)
+                RoundedRectangle(cornerRadius: 25)
                   .fill(Color.red.opacity(0.1))
               )
             }
+            .glassEffect(.clear.interactive())
             .padding(.bottom, 40)
           }
           .padding(.horizontal, 24)
